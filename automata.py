@@ -2,6 +2,8 @@
 import numpy as np
 import matplotlib.pylab as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.colors import ListedColormap
+from matplotlib.colors import BoundaryNorm
 from copy import copy
 
 
@@ -21,6 +23,10 @@ c_m = -1
 #1 pour une cellule enflammable
 #2 pour une cellule enflammée
 #3 pour une cellule consummée
+
+cmap = ListedColormap(['g', 'r', 'k'])
+boundaries = [0, 1.5, 2.5, 4]
+norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
 # Une cellule enflammée reste dans cet état pendant c_fuel étapes
 
@@ -57,10 +63,27 @@ class Cell:
 # La fonction de transition locale prend en argument une cellule et ses voisins, et renvoie la cellule à l'étape de temps suivante
 
 class Automaton:
+
+# On contourne l'impossiblité d'overloader dans Python avec des arguments par défaut:
+# Si touts les arguments sont passés (mauvaise pratique et accessoirement complètement idiot) la méthode de construction est l'utilisation de initial_matrix
 	
-	def __init__(self, initial_matrix):
-		self.matrix = initial_matrix
-		self.ii, self.jj = self.matrix.shape
+	def __init__(self, initial_matrix = None, fire_start = None, shape = None):
+
+		if initial_matrix is None:
+			
+			self.ii, self.jj = shape
+			mat = np.zeros(shape, dtype = object)
+			for i in range(self.ii):
+				for j in range(self.jj):
+					mat[i,j] = Cell(1, 1)
+			mat[fire_start] = Cell(2, 1)
+			self.matrix = mat
+			
+		else:
+			
+			self.matrix = initial_matrix
+			self.ii, self.jj = self.matrix.shape
+		
 		self.time = 0
 	
 	def get_neighbors(self, ci, cj):
@@ -80,32 +103,30 @@ class Automaton:
 			for j in range(self.jj):
 				sm[i,j] = self.matrix[i,j].state
 		return sm
+	
+	def color_matrix(self):
+		sm = self.state_matrix()
+		sm[sm == 1] = np.array([0,255,0])
+		sm[sm == 2] = np.array([255,0,0])
+		sm[sm == 3] = np.array([0,0,0])
+		return sm
 
 	def evolution_animation(self):
 		fig, ax = plt.subplots()
 		im = ax.imshow(self.state_matrix(), animated = True)
 		def update(x):
-			im.set_array(self.state_matrix())
+			im.set_data(self.state_matrix())
 			self.time_step()
 		FuncAnimation(fig, update, interval = 300)
 
 
-imax = 20
-jmax = 20
 
-initial_matrix = np.zeros((imax, jmax), dtype = object)
 
-for i in range(imax):
-	for j in range(jmax):
-		initial_matrix[i,j] = Cell(1, 1)
-
-initial_matrix[10, 10] = Cell(2, 1)
-
-auto = Automaton(initial_matrix)
+auto = Automaton(fire_start = (2,14), shape = (20,20))
 
 fig, ax = plt.subplots()
-im = ax.imshow(auto.state_matrix(), animated = True)
+im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
 def update(x):
 	im.set_array(auto.state_matrix())
 	auto.time_step()
-ani = FuncAnimation(fig, update, interval = 300)
+ani = FuncAnimation(fig, update, interval = 100)
