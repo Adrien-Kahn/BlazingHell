@@ -16,7 +16,7 @@ def sigmoid(x):
 # Pour commencer Cell contient juste state et moisture
 # moisture est affecté d'un coefficient c_m dans la régression linéaire et l'intercept d'un coefficient c_i
 
-c_i = 1
+c_i = 0
 c_m = -1
 
 # Cell.state vaut :
