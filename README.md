@@ -11,3 +11,11 @@ ImplÃ©mentation des cellules de l'automate, contient plusieurs attributs qui ind
 ### La Classe Automata
 
 ImplÃ©mentation de l'automate.
+
+
+
+# IdÃ©es
+
+### Descnte de gradient 
+- On sÃ©lectionne un sous ensemble de l'ensemble d'apprentissage
+- Pour chaque instance de l'ensemble d'apprentisage (zone brulée, carte humidité, carte température, etc...)
