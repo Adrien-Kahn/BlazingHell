@@ -32,3 +32,5 @@ On choisi un paramètre initial au hasard : paramètre = paramètre de régression d
 
 - Conserver en cache les cellules "actives", c'est-à-dire celles enflammée ou enflammable voisines d'enflammée, pour significativement réduire le nombre de cellules traités à chaque étape et assurer une complexité d'execution de l'automate de l'ordre de O(kn²)
 - Réaliser toutes les execution de l'automate nécéssaire au calcul du gradient simultanément pour tirer partie de la vectorialisation avec Numpy (à voir expérimentalement, peut-être que ça ne marchera pas, et peut-être que la mémoire ne va pas aider)
+
+mini test
