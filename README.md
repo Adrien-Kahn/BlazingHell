@@ -4,13 +4,23 @@
 
 Implémentation des cellules de l'automate, contient plusieurs attributs qui indiquent l'état de la cellule :
 
-`state`: 1 pour enflammable, 2 pour enflammée, 3 pour consommée
-`moisture`: valeur de l'humidité
-...
+- `state`: 1 pour enflammable, 2 pour enflammée, 3 pour consommée
+- `moisture`: valeur de l'humidité
+
+... et bien d'autre à venir (on se restreint pour le moment à ceux là)
 
 ### La Classe Automata
 
 Implémentation de l'automate.
+
+Le constructeur prend en argument : 
+- 'beta' : le paramètre de l'automate (un vecteur numpy)
+- 'shape' : la dimension de l'espace à simuler
+- 'firestart' : la coordonnée du point de départ du feu
+- 'moisture' : la matrice qui contient la valeur de l'humidité en tout point de l'espace
+
+Les méthodes :
+- 'get_neighbors' renvoie la liste des coordonnées voisines (diagonales incluses) de (ci, cj)
 
 
 
@@ -32,5 +42,6 @@ On choisi un paramètre initial au hasard : paramètre = paramètre de régression d
 
 - Conserver en cache les cellules "actives", c'est-à-dire celles enflammée ou enflammable voisines d'enflammée, pour significativement réduire le nombre de cellules traités à chaque étape et assurer une complexité d'execution de l'automate de l'ordre de O(kn²)
 - Réaliser toutes les execution de l'automate nécéssaire au calcul du gradient simultanément pour tirer partie de la vectorialisation avec Numpy (à voir expérimentalement, peut-être que ça ne marchera pas, et peut-être que la mémoire ne va pas aider)
+- Conserver les valeurs des variables explicatives locales dans des vecteurs plutôt que dans des objets fait main pour exploiter la vitesse de Numpy
 
 mini test

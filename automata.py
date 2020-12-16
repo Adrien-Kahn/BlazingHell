@@ -67,27 +67,40 @@ class Automaton:
 # On contourne l'impossiblité d'overloader dans Python avec des arguments par défaut:
 # Si touts les arguments sont passés (mauvaise pratique et accessoirement complètement idiot) la méthode de construction est l'utilisation de initial_matrix
 	
-	def __init__(self, initial_matrix = None, fire_start = None, shape = None):
+# 	def __init__(self, initial_matrix = None, fire_start = None, shape = None):
 
-		if initial_matrix is None:
-			
-			self.ii, self.jj = shape
-			mat = np.zeros(shape, dtype = object)
-			for i in range(self.ii):
-				for j in range(self.jj):
-					mat[i,j] = Cell(1, 1)
-			mat[fire_start] = Cell(2, 1)
-			self.matrix = mat
-			
-		else:
-			
-			self.matrix = initial_matrix
-			self.ii, self.jj = self.matrix.shape
+# 		if initial_matrix is None:
+# 			
+# 			self.ii, self.jj = shape
+# 			mat = np.zeros(shape, dtype = object)
+# 			for i in range(self.ii):
+# 				for j in range(self.jj):
+# 					mat[i,j] = Cell(1, 1)
+# 			mat[fire_start] = Cell(2, 1)
+# 			self.matrix = mat
+# 			
+# 		else:
+# 			
+# 			self.matrix = initial_matrix
+# 			self.ii, self.jj = self.matrix.shape
+# 		
+# 		self.time = 0
 		
-		self.time = 0
 	
+	def __init__(self, beta, shape, firestart, moisture):
+		self.ii, self.jj = shape
+		mat = np.zeros(shape, dtype = object)
+		for i in range(self.ii):
+			for j in range(self.jj):
+ 				mat[i,j] = Cell(1, moisture[i,j])
+		mat[firestart].state = 2
+		self.matrix = mat
+		self.beta = beta
+
+
 	def get_neighbors(self, ci, cj):
 		return [self.matrix[i,j] for j in range(cj - 1, cj + 2) for i in range(ci - 1, ci + 2) if  i >= 0 and i < self.ii and j >= 0 and j < self.jj and (i != ci or j != cj)]
+
 	
 	def time_step(self):
 		new_matrix = np.zeros((self.ii, self.jj), dtype = object)
@@ -96,6 +109,7 @@ class Automaton:
 				new_matrix[i,j] = self.matrix[i,j].transition(self.get_neighbors(i,j))
 		self.matrix = new_matrix
 		self.time += 1
+
 
 	def state_matrix(self):
 		sm = np.zeros((self.ii, self.jj))
