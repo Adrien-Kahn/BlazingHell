@@ -5,6 +5,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 from copy import copy
+from time import time
 
 
 def sigmoid(x):
@@ -14,10 +15,6 @@ def sigmoid(x):
 
 # Chaque cellule de l'automate contient un objet cell qui contient toutes les données nécéssaires au calcul de la fonction de transition
 # Pour commencer Cell contient juste state et moisture
-# moisture est affecté d'un coefficient c_m dans la régression linéaire et l'intercept d'un coefficient c_i
-
-c_i = 0
-c_m = -1
 
 # Cell.state vaut :
 #1 pour une cellule enflammable
@@ -30,7 +27,7 @@ norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
 # Une cellule enflammée reste dans cet état pendant c_fuel étapes
 
-c_fuel = 4
+c_fuel = 10
 
 
 
@@ -44,12 +41,12 @@ class Cell:
 	def __str__(self):
 		return str(self.state)
 	
-	def transition(self, neighbors):
+	def transition(self, neighbors, c_intercept, c_moisture):
 		new_c = copy(self)
 		if self.state == 1:
 			n = len([c for c in neighbors if c.state == 2])
 			if n > 0:
-				p = sigmoid(n*(c_i + c_m*self.moisture))
+				p = sigmoid(n*(c_intercept + c_moisture*self.moisture))
 				if np.random.random() < p:
 					new_c.state = 2
 		if self.state == 2:
@@ -87,7 +84,7 @@ class Automaton:
 # 		self.time = 0
 		
 	
-	def __init__(self, beta, shape, firestart, moisture):
+	def __init__(self, c_intercept, c_moisture, shape, firestart, moisture):
 		self.ii, self.jj = shape
 		mat = np.zeros(shape, dtype = object)
 		for i in range(self.ii):
@@ -95,7 +92,10 @@ class Automaton:
  				mat[i,j] = Cell(1, moisture[i,j])
 		mat[firestart].state = 2
 		self.matrix = mat
-		self.beta = beta
+		self.c_intercept = c_intercept
+		self.c_moisture = c_moisture
+		self.time = 0
+		self.fire_nb = 1
 
 
 	def get_neighbors(self, ci, cj):
@@ -104,11 +104,29 @@ class Automaton:
 	
 	def time_step(self):
 		new_matrix = np.zeros((self.ii, self.jj), dtype = object)
+		s = 0
 		for i in range(self.ii):
 			for j in range(self.jj):
-				new_matrix[i,j] = self.matrix[i,j].transition(self.get_neighbors(i,j))
+				new_matrix[i,j] = self.matrix[i,j].transition(self.get_neighbors(i,j), self.c_intercept, self.c_moisture)
+				if new_matrix[i,j].state == 2:
+					s += 1
 		self.matrix = new_matrix
+		self.fire_nb = s
 		self.time += 1
+	
+	def run(self):
+		t0 = time()
+		while self.fire_nb > 0:
+			self.time_step()
+		s = 0
+		for i in range(self.ii):
+			for j in range(self.jj):
+				if self.matrix[i,j].state == 3:
+					s += 1
+		print("execution time : {:.2f}s".format(time() - t0))
+		print("execution steps : {}".format(self.time))
+		print("number of burned cells : {}".format(s))
+		print("percentage of burned cells : {:.2%}".format(s/(self.ii * self.jj)))
 
 
 	def state_matrix(self):
@@ -134,13 +152,21 @@ class Automaton:
 		FuncAnimation(fig, update, interval = 300)
 
 
+# Tests et visualisation de l'évolution de l'automate
 
 
-auto = Automaton(fire_start = (2,14), shape = (20,20))
+x = np.linspace(-1,1,100)
+X,Y = np.meshgrid(x,x)
 
-fig, ax = plt.subplots()
-im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-def update(x):
-	im.set_array(auto.state_matrix())
-	auto.time_step()
-ani = FuncAnimation(fig, update, interval = 100)
+auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (100,100), firestart = (50,50), moisture = X**2 + Y**2)
+
+auto.run()
+
+#fig, ax = plt.subplots()
+#im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+#def update(x):
+#	im.set_array(auto.state_matrix())
+#	auto.time_step()
+#ani = FuncAnimation(fig, update, interval = 100)
+
+
