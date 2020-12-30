@@ -16,7 +16,7 @@ La méthode `transition`, étant donné la liste des cellules voisines et le paramè
 Implémentation de l'automate.
 
 Le constructeur prend en argument : 
-- `beta` : le paramètre de l'automate (un vecteur numpy) [Pour le moment, il prend juste la forme de deux paramètres `c_intercept` et `c_moisture`
+- `beta` : le paramètre de l'automate (un vecteur numpy) [Pour le moment, il prend juste la forme de deux paramètres `c_intercept` et `c_moisture`]
 - `shape` : la dimension de l'espace à simuler
 - `firestart` : la coordonnée du point de départ du feu
 - `moisture` : la matrice qui contient la valeur de l'humidité en tout point de l'espace
@@ -26,6 +26,7 @@ Les méthodes :
 - `time_step` actualise l'automate après la simulation d'une étape
 - `run` simule l'automate jusqu'à ce que toutes les cellules soient dans l'état 1 ou 3 et renvoie le nombre de cellule brulée [Pour le moment c'est un `print`pour plus de visibilité]
 
+Le reste c'est essentiellement du bazar qui sert à visualiser l'automate mais qui n'est pas fondamentalement important. Il faut noter que `evolution_animation` ne fonctionne pas (et c'est bien dommage mais c'est la vie).
 
 
 # Idées
