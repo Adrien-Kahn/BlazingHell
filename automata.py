@@ -127,6 +127,7 @@ class Automaton:
 		print("execution steps : {}".format(self.time))
 		print("number of burned cells : {}".format(s))
 		print("percentage of burned cells : {:.2%}".format(s/(self.ii * self.jj)))
+		return s
 
 
 	def state_matrix(self):
@@ -156,17 +157,19 @@ class Automaton:
 
 if __name__ == "__main__":
 	
-	x = np.linspace(-1,1,100)
+	n = 50
+	
+	x = np.linspace(-1,1,n)
 	X,Y = np.meshgrid(x,x)
 	
-	auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (100,100), firestart = (50,50), moisture = X**2 + Y**2)
+	auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (n,n), firestart = (int(n/2), int(n/2)), moisture = X**2 + Y**2)
 	
-#	auto.run()
+	auto.run()
 	
-	fig, ax = plt.subplots()
-	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-	def update(x):
-		im.set_array(auto.state_matrix())
-		auto.time_step()
-	ani = FuncAnimation(fig, update, interval = 100)
+#	fig, ax = plt.subplots()
+#	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+#	def update(x):
+#		im.set_array(auto.state_matrix())
+#		auto.time_step()
+#	ani = FuncAnimation(fig, update, interval = 100)
 	

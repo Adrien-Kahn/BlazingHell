@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pylab as plt
+import pandas as pd
 from automata import Automaton
 
 from matplotlib.animation import FuncAnimation
@@ -10,7 +11,7 @@ cmap = ListedColormap(['g', 'r', 'k'])
 boundaries = [0, 1.5, 2.5, 4]
 norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
-# Credit for the perlin generator : https://stackoverflow.com/questions/42147776/producing-2d-perlin-noise-with-numpy
+# Credits for the perlin generator : https://stackoverflow.com/questions/42147776/producing-2d-perlin-noise-with-numpy
 
 def perlin(x,y,seed=np.random.randint(10000000)):
     # permutation table
@@ -51,17 +52,56 @@ def gradient(h,x,y):
     g = vectors[h%4]
     return g[:,:,0] * x + g[:,:,1] * y
 
-lin = np.linspace(0,5,100,endpoint=False)
-x,y = np.meshgrid(lin,lin) # FIX3: I thought I had to invert x and y here but it was a mistake
+# data returns n instances of fires
 
-plt.imshow(perlin(x,y))
+# firestart est fixé
 
-auto = Automaton(c_intercept = 0.5, c_moisture = -10, shape = (100,100), firestart = (50,50), moisture = perlin(x,y) + 0.5)
 
-fig, ax = plt.subplots()
-im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-def update(x):
-	im.set_array(auto.state_matrix())
-	auto.time_step()
-ani = FuncAnimation(fig, update, interval = 100)
+# seed, moisture, value
+
+def data(n, c_intercept, c_moisture, shape, firestart):
+	
+	df = pd.DataFrame(columns = ['seed', 'moisture', 'value'])
+	
+	x,y = shape
+	lx = np.linspace(0,5,x,endpoint=False)
+	ly = np.linspace(0,5,y,endpoint=False)
+	X,Y = np.meshgrid(lx,ly)
+	
+	for k in range(n):
+		moisture = perlin(X,Y,seed=k) + 0.5
+		auto = Automaton(c_intercept, c_moisture, shape, firestart, moisture)
+		value = auto.run()
+		df.loc[k] = [k, moisture, value]
+	
+	return df
+
+
+x,y = 50,50
+lx = np.linspace(0,5,x,endpoint=False)
+ly = np.linspace(0,5,y,endpoint=False)
+X,Y = np.meshgrid(lx,ly)
+
+df = data(4, 0.5, -7, (x,x), (int(x/2),int(x/2)))
+
+auto0 = Automaton(c_intercept = 0.5, c_moisture = -7, shape = (x,y), firestart = (int(x/2),int(x/2)), moisture = df.at[0, 'moisture'])
+auto1 = Automaton(c_intercept = 0.5, c_moisture = -7, shape = (x,y), firestart = (int(x/2),int(x/2)), moisture = df.at[1, 'moisture'])
+auto2 = Automaton(c_intercept = 0.5, c_moisture = -7, shape = (x,y), firestart = (int(x/2),int(x/2)), moisture = df.at[2, 'moisture'])
+auto3 = Automaton(c_intercept = 0.5, c_moisture = -7, shape = (x,y), firestart = (int(x/2),int(x/2)), moisture = df.at[3, 'moisture'])
+
+
+
+#lin = np.linspace(0,5,100,endpoint=False)
+#x,y = np.meshgrid(lin,lin) # FIX3: I thought I had to invert x and y here but it was a mistake
+
+#plt.imshow(perlin(x,y))
+#
+#auto = Automaton(c_intercept = 0.5, c_moisture = -10, shape = (100,100), firestart = (50,50), moisture = perlin(x,y) + 0.5)
+#
+#fig, ax = plt.subplots()
+#im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+#def update(x):
+#	im.set_array(auto.state_matrix())
+#	auto.time_step()
+#ani = FuncAnimation(fig, update, interval = 100)
 	
