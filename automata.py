@@ -154,19 +154,19 @@ class Automaton:
 
 # Tests et visualisation de l'évolution de l'automate
 
-
-x = np.linspace(-1,1,100)
-X,Y = np.meshgrid(x,x)
-
-auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (100,100), firestart = (50,50), moisture = X**2 + Y**2)
-
-auto.run()
-
-#fig, ax = plt.subplots()
-#im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-#def update(x):
-#	im.set_array(auto.state_matrix())
-#	auto.time_step()
-#ani = FuncAnimation(fig, update, interval = 100)
-
-
+if __name__ == "__main__":
+	
+	x = np.linspace(-1,1,100)
+	X,Y = np.meshgrid(x,x)
+	
+	auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (100,100), firestart = (50,50), moisture = X**2 + Y**2)
+	
+#	auto.run()
+	
+	fig, ax = plt.subplots()
+	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+	def update(x):
+		im.set_array(auto.state_matrix())
+		auto.time_step()
+	ani = FuncAnimation(fig, update, interval = 100)
+	

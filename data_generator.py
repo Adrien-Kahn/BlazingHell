@@ -1,7 +1,18 @@
 import numpy as np
 import matplotlib.pylab as plt
+from automata import Automaton
 
-def perlin(x,y,seed=0):
+from matplotlib.animation import FuncAnimation
+from matplotlib.colors import ListedColormap
+from matplotlib.colors import BoundaryNorm
+
+cmap = ListedColormap(['g', 'r', 'k'])
+boundaries = [0, 1.5, 2.5, 4]
+norm = BoundaryNorm(boundaries, cmap.N, clip=True)
+
+# Credit for the perlin generator : https://stackoverflow.com/questions/42147776/producing-2d-perlin-noise-with-numpy
+
+def perlin(x,y,seed=np.random.randint(10000000)):
     # permutation table
     np.random.seed(seed)
     p = np.arange(256,dtype=int)
@@ -43,4 +54,14 @@ def gradient(h,x,y):
 lin = np.linspace(0,5,100,endpoint=False)
 x,y = np.meshgrid(lin,lin) # FIX3: I thought I had to invert x and y here but it was a mistake
 
-plt.imshow(perlin(x,y,seed=2),origin='upper')
+plt.imshow(perlin(x,y))
+
+auto = Automaton(c_intercept = 0.5, c_moisture = -10, shape = (100,100), firestart = (50,50), moisture = perlin(x,y) + 0.5)
+
+fig, ax = plt.subplots()
+im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+def update(x):
+	im.set_array(auto.state_matrix())
+	auto.time_step()
+ani = FuncAnimation(fig, update, interval = 100)
+	
