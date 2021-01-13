@@ -60,50 +60,62 @@ class Cell:
 # La fonction de transition locale prend en argument une cellule et ses voisins, et renvoie la cellule à l'étape de temps suivante
 
 class Automaton:
-
-# On contourne l'impossiblité d'overloader dans Python avec des arguments par défaut:
-# Si touts les arguments sont passés (mauvaise pratique et accessoirement complètement idiot) la méthode de construction est l'utilisation de initial_matrix
-	
-# 	def __init__(self, initial_matrix = None, fire_start = None, shape = None):
-
-# 		if initial_matrix is None:
-# 			
-# 			self.ii, self.jj = shape
-# 			mat = np.zeros(shape, dtype = object)
-# 			for i in range(self.ii):
-# 				for j in range(self.jj):
-# 					mat[i,j] = Cell(1, 1)
-# 			mat[fire_start] = Cell(2, 1)
-# 			self.matrix = mat
-# 			
-# 		else:
-# 			
-# 			self.matrix = initial_matrix
-# 			self.ii, self.jj = self.matrix.shape
-# 		
-# 		self.time = 0
-		
 	
 	def __init__(self, c_intercept, c_moisture, shape, firestart, moisture):
+
 		self.ii, self.jj = shape
+
+#		builds the matrix that represents the current state of the automata
 		mat = np.zeros(shape, dtype = object)
 		for i in range(self.ii):
 			for j in range(self.jj):
  				mat[i,j] = Cell(1, moisture[i,j])
 		mat[firestart].state = 2
 		self.matrix = mat
+		
 		self.c_intercept = c_intercept
 		self.c_moisture = c_moisture
 		self.time = 0
 		self.fire_nb = 1
 
+#		builds a matrix that contains the list of the indexes neighbors of the current index
+		self.neighborsMatrix = np.zeros(shape, dtype = object)
+		for ci in range(self.ii):
+			for cj in range(self.jj):
+				self.neighborsMatrix[ci,cj] = [(i,j) for j in range(cj - 1, cj + 2) for i in range(ci - 1, ci + 2) if  i >= 0 and i < self.ii and j >= 0 and j < self.jj and (i != ci or j != cj)]
+		
+#		builds a list that will contain the indexes of burning cells and their neighbors
+		self.cache = [firestart] + self.neighborsMatrix[firestart]
+		
+		
 
 	def get_neighbors(self, ci, cj):
 		return [self.matrix[i,j] for j in range(cj - 1, cj + 2) for i in range(ci - 1, ci + 2) if  i >= 0 and i < self.ii and j >= 0 and j < self.jj and (i != ci or j != cj)]
-
+		
 	
 	def time_step(self):
-		new_matrix = np.zeros((self.ii, self.jj), dtype = object)
+		
+#		new_cache will contain the indexes of burning cells and their neighbors in the next time step
+		
+#		we must update fire_nb
+		
+#		we loop over the indexes in cache
+		for index in self.cache:
+			c = self.matrix[index]
+
+#			if the cell is not yet burned
+			if c.state == 1:
+#				WE DO NOT COUNT THE NUMBER OF NEIGHBORING BURNING CELLS
+				p = sigmoid(n*(self.c_intercept + self.c_moisture*c.moisture))
+				if np.random.random() < p:
+					c.state = 1
+
+#				LOOK UP SETS TO IMPLEMENT SELF.CACHE !!!
+		
+#		we do not copy the matrix but update the current one
+#		assuming that cache indeed contains what we want it to, if we do not count the number of neighboring burning cells, we do not need the entire former state to compute the future step of a single cell
+		
+		
 		s = 0
 		for i in range(self.ii):
 			for j in range(self.jj):
@@ -164,12 +176,12 @@ if __name__ == "__main__":
 	
 	auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (n,n), firestart = (int(n/2), int(n/2)), moisture = X**2 + Y**2)
 	
-	auto.run()
+#	auto.run()
 	
-#	fig, ax = plt.subplots()
-#	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-#	def update(x):
-#		im.set_array(auto.state_matrix())
-#		auto.time_step()
-#	ani = FuncAnimation(fig, update, interval = 100)
+	fig, ax = plt.subplots()
+	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+	def update(x):
+		im.set_array(auto.state_matrix())
+		auto.time_step()
+	ani = FuncAnimation(fig, update, interval = 100)
 	
