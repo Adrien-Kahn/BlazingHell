@@ -11,8 +11,6 @@ from time import time
 def sigmoid(x):
 	return 1/(1 + np.exp(-x))
 
-
-
 # Chaque cellule de l'automate contient un objet cell qui contient toutes les données nécéssaires au calcul de la fonction de transition
 # Pour commencer Cell contient juste state et moisture
 
@@ -84,48 +82,51 @@ class Automaton:
 			for cj in range(self.jj):
 				self.neighborsMatrix[ci,cj] = [(i,j) for j in range(cj - 1, cj + 2) for i in range(ci - 1, ci + 2) if  i >= 0 and i < self.ii and j >= 0 and j < self.jj and (i != ci or j != cj)]
 		
-#		builds a list that will contain the indexes of burning cells and their neighbors
-		self.cache = [firestart] + self.neighborsMatrix[firestart]
+#		builds a set that will contain the indexes of burning cells and their neighbors
+		self.cache = set([firestart] + self.neighborsMatrix[firestart])
 		
 		
-
+# Unused
 	def get_neighbors(self, ci, cj):
 		return [self.matrix[i,j] for j in range(cj - 1, cj + 2) for i in range(ci - 1, ci + 2) if  i >= 0 and i < self.ii and j >= 0 and j < self.jj and (i != ci or j != cj)]
 		
 	
+	
 	def time_step(self):
 		
-#		new_cache will contain the indexes of burning cells and their neighbors in the next time step
+#		we do not copy the matrix but update the current one
+#		assuming that cache indeed contains what we want it to, if we do not count the number of neighboring burning cells, we do not need the entire former state to compute the future step of a single cell
 		
-#		we must update fire_nb
+#		new_cache will contain the indexes of burning cells and their neighbors in the next time step
+		new_cache = set([])
 		
 #		we loop over the indexes in cache
 		for index in self.cache:
 			c = self.matrix[index]
 
-#			if the cell is not yet burned
+#			if the cell is not yet burned, we check if it catches on fire
 			if c.state == 1:
 #				WE DO NOT COUNT THE NUMBER OF NEIGHBORING BURNING CELLS
-				p = sigmoid(n*(self.c_intercept + self.c_moisture*c.moisture))
+				p = sigmoid(self.c_intercept + self.c_moisture*c.moisture)
 				if np.random.random() < p:
-					c.state = 1
-
-#				LOOK UP SETS TO IMPLEMENT SELF.CACHE !!!
-		
-#		we do not copy the matrix but update the current one
-#		assuming that cache indeed contains what we want it to, if we do not count the number of neighboring burning cells, we do not need the entire former state to compute the future step of a single cell
-		
-		
-		s = 0
-		for i in range(self.ii):
-			for j in range(self.jj):
-				new_matrix[i,j] = self.matrix[i,j].transition(self.get_neighbors(i,j), self.c_intercept, self.c_moisture)
-				if new_matrix[i,j].state == 2:
-					s += 1
-		self.matrix = new_matrix
-		self.fire_nb = s
+					c.state = 2
+					self.fire_nb += 1
+					new_cache.update([index] + self.neighborsMatrix[index])
+			
+# 			if the cell is burning, we decrease fuel and check whether there is still left
+			if c.state == 2:
+				c.fuel -= 1
+				if c.fuel == 0:
+					c.state = 3
+					self.fire_nb -= 1
+				else:
+					new_cache.update([index] + self.neighborsMatrix[index])
+			
+		self.cache = new_cache		
 		self.time += 1
-	
+				
+
+
 	def run(self):
 		t0 = time()
 		while self.fire_nb > 0:
@@ -176,12 +177,12 @@ if __name__ == "__main__":
 	
 	auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (n,n), firestart = (int(n/2), int(n/2)), moisture = X**2 + Y**2)
 	
-#	auto.run()
+	auto.run()
 	
-	fig, ax = plt.subplots()
-	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-	def update(x):
-		im.set_array(auto.state_matrix())
-		auto.time_step()
-	ani = FuncAnimation(fig, update, interval = 100)
+# 	fig, ax = plt.subplots()
+# 	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+# 	def update(x):
+# 		im.set_array(auto.state_matrix())
+# 		auto.time_step()
+# 	ani = FuncAnimation(fig, update, interval = 100)
 	
