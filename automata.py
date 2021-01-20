@@ -39,6 +39,8 @@ class Cell:
 	def __str__(self):
 		return str(self.state)
 	
+	
+# 	Not useful anymore
 	def transition(self, neighbors, c_intercept, c_moisture):
 		new_c = copy(self)
 		if self.state == 1:
@@ -55,7 +57,6 @@ class Cell:
 		
 
 
-# La fonction de transition locale prend en argument une cellule et ses voisins, et renvoie la cellule à l'étape de temps suivante
 
 class Automaton:
 	
@@ -128,7 +129,9 @@ class Automaton:
 
 
 	def run(self):
+	
 		t0 = time()
+		
 		while self.fire_nb > 0:
 			self.time_step()
 		s = 0
@@ -136,10 +139,13 @@ class Automaton:
 			for j in range(self.jj):
 				if self.matrix[i,j].state == 3:
 					s += 1
-		print("execution time : {:.2f}s".format(time() - t0))
-		print("execution steps : {}".format(self.time))
-		print("number of burned cells : {}".format(s))
-		print("percentage of burned cells : {:.2%}".format(s/(self.ii * self.jj)))
+
+		if __name__ == "__main__":		
+			print("execution time : {:.2f}s".format(time() - t0))
+			print("execution steps : {}".format(self.time))
+			print("number of burned cells : {}".format(s))
+			print("percentage of burned cells : {:.2%}".format(s/(self.ii * self.jj)))
+	
 		return s
 
 
@@ -166,7 +172,7 @@ class Automaton:
 		FuncAnimation(fig, update, interval = 300)
 
 
-# Tests et visualisation de l'évolution de l'automate
+# Tests and visualization
 
 if __name__ == "__main__":
 	
