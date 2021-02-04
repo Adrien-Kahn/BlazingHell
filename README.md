@@ -47,3 +47,10 @@ On choisi un paramètre initial au hasard : paramètre = paramètre de régression d
 
 - Réaliser toutes les exécutions de l'automate nécéssaires au calcul du gradient simultanément pour tirer partie de la vectorialisation avec Numpy (à voir expérimentalement, peut-être que ça ne marchera pas, et peut-être que la mémoire ne va pas aider)
 - Conserver les valeurs des variables explicatives locales dans des vecteurs plutôt que dans des objets fait main pour exploiter la vitesse de Numpy
+
+
+### Quelques liens pour classifier les pics
+
+- https://www.baeldung.com/cs/clustering-unknown-number
+- https://stats.stackexchange.com/questions/217875/clustering-very-small-datasets
+- https://medium.com/@sametgirgin/hierarchical-clustering-model-in-5-steps-with-python-6c45087d4318
