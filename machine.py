@@ -4,8 +4,12 @@ import pandas as pd
 import numpy as np
 import random as rd
 from time import time
+import matplotlib.pyplot as plt
 
 # Pour commencer, pour pas trop se prendre la tête, on va fixer firestart constamment à x_max/2, y_max/2
+
+np.random.seed(1100)
+# rd.seed(0)
 
 class machine:
 	
@@ -17,6 +21,36 @@ class machine:
 		self.h = h
 		self.learning_rate = learning_rate
 	
+	
+# 	Computes the approximation of the gradient for the instance of data at index k
+	
+	def gradient(self, k):
+		
+		moisture = self.data.iloc[k]['moisture']
+		value = self.data.iloc[k]['value']
+		
+		x,y = moisture.shape
+
+# 		On calcule d'abord la prédiction sur le paramètre actuel			
+		auto_0 = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c_0 = (auto_0.run() - value)**2
+		
+# 		Puis avec chacun des paramètres augmenté de self.h
+# 		On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
+
+# 		c_intercept + h d'abord
+		auto_i = Automaton(self.c_intercept + self.h, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c_i = (auto_i.run() - value)**2			
+		g_i = (c_i - c_0)/self.h
+			
+# 		c_moisture + h ensuite
+		auto_m = Automaton(self.c_intercept, self.c_moisture + self.h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c_m = (auto_m.run() - value)**2			
+		g_m = (c_m - c_0)/self.h
+		
+		return g_i, g_m
+
+
 	
 	def learn_step(self):
 		
@@ -32,33 +66,10 @@ class machine:
 		grad_intercept = 0
 		grad_moisture = 0
 		
-		for k in ll:
-			moisture = self.data.iloc[k]['moisture']
-			value = self.data.iloc[k]['value']
+		for k in ll:			
+			g_i, g_m = self.gradient(k)
 			
-# 			On calcule d'abord la prédiction sur le paramètre actuel
-			
-			x,y = moisture.shape
-			auto_0 = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-			c_0 = (auto_0.run() - value)**2
-			
-# 			Puis avec chacun des paramètres augmenté de self.h
-# 			On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
-
-# 			c_intercept + h d'abord
-
-			auto_i = Automaton(self.c_intercept + self.h, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-			c_i = (auto_i.run() - value)**2
-			
-			g_i = (c_i - c_0)/self.h
 			grad_intercept += g_i
-			
-# 			c_moisture + h ensuite
-
-			auto_m = Automaton(self.c_intercept, self.c_moisture + self.h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-			c_m = (auto_m.run() - value)**2
-			
-			g_m = (c_m - c_0)/self.h
 			grad_moisture += g_m
 			
 # 		Then we use the gradient by normalizing it and adding it to the parameter
@@ -74,12 +85,12 @@ class machine:
 		for k in range(n):
 			self.learn_step()
 	
-	def predict(self, firestart, moisture):
+	def predict(self, moisture, firestart = (25,25)):
 		auto = Automaton(self.c_intercept, self.c_moisture, moisture.shape, firestart, moisture)
 		return auto.run()
 
 
-bigdata = data(100, 0.5, -7, shape = (50,50), firestart = (25,25))
+bigdata = data(10, 0.5, -7, shape = (50,50), firestart = (25,25))
 daneel = machine(bigdata, mb_size = 10)
 
 

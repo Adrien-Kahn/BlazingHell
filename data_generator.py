@@ -4,6 +4,8 @@ import pandas as pd
 from automata import Automaton
 import random as rd
 
+np.random.seed(0)
+
 from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
@@ -39,7 +41,7 @@ def perlin(x,y,seed=np.random.randint(10000000)):
     x2 = lerp(n01,n11,u) # FIX1: I was using n10 instead of n01
 	 
 # 	 MAKE RANDOM RANDOM AGAIN !
-    np.random.seed(int(rd.random()*10000))
+#   np.random.seed(int(rd.random()*10000))
 	 
     return lerp(x1,x2,v) # FIX2: I also had to reverse x1 and x2 here
 
