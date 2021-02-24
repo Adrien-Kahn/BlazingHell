@@ -49,8 +49,26 @@ On choisi un paramètre initial au hasard : paramètre = paramètre de régression d
 - Conserver les valeurs des variables explicatives locales dans des vecteurs plutôt que dans des objets fait main pour exploiter la vitesse de Numpy
 
 
-### Quelques liens pour classifier les pics
+### Quelques liens pour classifier les pics (si jamais c'est réelement utile)
 
 - https://www.baeldung.com/cs/clustering-unknown-number
 - https://stats.stackexchange.com/questions/217875/clustering-very-small-datasets
 - https://medium.com/@sametgirgin/hierarchical-clustering-model-in-5-steps-with-python-6c45087d4318
+
+
+### Notes pour le rapport (pour se souvenir de ce des difficultés rencontrées et tout)
+
+
+
+What happens is that the code of the imported class is only run when it is first imported. If the main code is run again with no change made to imported classes, they are not reloaded and their code is not run again, which might lead to unexpected behaviour with regard to seeds.
+
+Code in imported classes may react unexpectedly to the seed in the main code (is random at first, but after a few call starts following the seed). In any case, all code inside main, regardless of whether it uses an imported class, always follows the seed.
+
+Bigdata is always the same even without seed in machine and data_generator. This is not normal.
+This is because perlin sets a seed
+We want to know if we can call a function that follows a certain seed and then keep having a random behaviour. The thing is that if we set a seed and then perlin sets another, we want to be able to go back to the original one.
+Can we fix this by isolating perlin in a different class ?
+
+We cannot
+
+What we will do then is specify to perlin the seed it should revert to after it has finished running

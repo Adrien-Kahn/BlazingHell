@@ -2,9 +2,6 @@ import numpy as np
 import matplotlib.pylab as plt
 import pandas as pd
 from automata import Automaton
-import random as rd
-
-np.random.seed(0)
 
 from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
@@ -16,7 +13,7 @@ norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
 # Credits for the perlin generator : https://stackoverflow.com/questions/42147776/producing-2d-perlin-noise-with-numpy
 
-def perlin(x,y,seed=np.random.randint(10000000)):
+def perlin(x, y, revert_seed, seed=np.random.randint(10000000)):
     # permutation table
     np.random.seed(seed)
     p = np.arange(256,dtype=int)
@@ -38,12 +35,12 @@ def perlin(x,y,seed=np.random.randint(10000000)):
     n10 = gradient(p[p[xi+1]+yi],xf-1,yf)
     # combine noises
     x1 = lerp(n00,n10,u)
-    x2 = lerp(n01,n11,u) # FIX1: I was using n10 instead of n01
+    x2 = lerp(n01,n11,u)
 	 
-# 	 MAKE RANDOM RANDOM AGAIN !
-#   np.random.seed(int(rd.random()*10000))
+    # reverts to revert_seed
+    np.random.seed(revert_seed)
 	 
-    return lerp(x1,x2,v) # FIX2: I also had to reverse x1 and x2 here
+    return lerp(x1,x2,v)
 
 def lerp(a,b,x):
     "linear interpolation"
@@ -67,7 +64,7 @@ def gradient(h,x,y):
 
 # seed, moisture, value
 
-def data(n, c_intercept, c_moisture, shape, firestart):
+def data(n, c_intercept, c_moisture, shape, firestart, revert_seed):
 	
 	df = pd.DataFrame(columns = ['seed', 'moisture', 'value'])
 	
@@ -77,7 +74,7 @@ def data(n, c_intercept, c_moisture, shape, firestart):
 	X,Y = np.meshgrid(lx,ly)
 	
 	for k in range(n):
-		moisture = perlin(X,Y,seed=k) + 0.5
+		moisture = perlin(X,Y,revert_seed,seed=k) + 0.5
 		auto = Automaton(c_intercept, c_moisture, shape, firestart, moisture)
 		value = auto.run()
 		df.loc[k] = [k, moisture, value]

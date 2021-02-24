@@ -8,12 +8,28 @@ import matplotlib.pyplot as plt
 
 # Pour commencer, pour pas trop se prendre la tête, on va fixer firestart constamment à x_max/2, y_max/2
 
-np.random.seed(1100)
-# rd.seed(0)
+
+# The evalution of the global cost leads to very different values over the same instance, even for a dataset with n = 100. As such, we recommend averaging over many iteration though it will be very costly.
+
+# Initial cost: 229536.74
+# Initial cost 2: 162438.16
+# Initial cost 3: 187141.67
+# Initial cost 4: 148423.07
+# Initial cost 5: 226678.29
+# Initial cost 5: 153856.01
+# Initial cost 6: 186287.94
+
+
+# This seed controls pretty much everything else
+npseed = 1
+np.random.seed(npseed)
+
+# This seed controls which data indices are chosen in minibatches
+rd.seed(0)
 
 class machine:
 	
-	def __init__(self, data, mb_size, c_intercept = 0, c_moisture = 0, h = 0.01, learning_rate = 0.000003):
+	def __init__(self, data, mb_size, c_intercept = 0, c_moisture = -6, h = 0.05, learning_rate = 0.000000005):
 		self.data = data
 		self.mb_size = mb_size
 		self.c_intercept = c_intercept
@@ -21,6 +37,35 @@ class machine:
 		self.h = h
 		self.learning_rate = learning_rate
 	
+	
+	def __str__(self):
+		return "c_intercept = {} \nc_moisture = {} \n".format(self.c_intercept, self.c_moisture)
+	
+	
+# 	Computes the quadratic cost of the prediction on the instance k of data
+	
+	def cost(self, k):
+		
+		moisture = self.data.iloc[k]['moisture']
+		value = self.data.iloc[k]['value']
+		
+		x,y = moisture.shape
+
+		auto = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		
+		return (auto.run() - value)**2
+	
+	
+# 	Computes the average quadratic cost over all instances of data
+
+	def fullcost(self):
+		c = 0
+		n = len(self.data)
+		for k in range(n):
+			c += self.cost(k)
+# 			print(self.cost(k))
+		return c/n
+
 	
 # 	Computes the approximation of the gradient for the instance of data at index k
 	
@@ -90,13 +135,23 @@ class machine:
 		return auto.run()
 
 
-bigdata = data(10, 0.5, -7, shape = (50,50), firestart = (25,25))
-daneel = machine(bigdata, mb_size = 10)
+bigdata = data(100, 0.5, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
+print("Data generated")
+
+daneel = machine(bigdata, mb_size = 30)
+print("Initial cost: {}".format(daneel.fullcost()))
+print("Initial cost 2: {}".format(daneel.fullcost()))
+print("Initial cost 3: {}".format(daneel.fullcost()))
+print("Initial cost 4: {}".format(daneel.fullcost()))
+print("Initial cost 5: {}".format(daneel.fullcost()))
+print("Initial cost 5: {}".format(daneel.fullcost()))
+print("Initial cost 6: {}".format(daneel.fullcost()))
+
+print(daneel)
 
 
 for k in range(50):
 	daneel.learn_step()
-	print(daneel.c_intercept)
-	print(daneel.c_moisture)
-	print()
+	print("Cost: {}".format(daneel.fullcost()))
+	print(daneel)
 
