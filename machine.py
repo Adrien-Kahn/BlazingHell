@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 # Initial cost 5: 153856.01
 # Initial cost 6: 186287.94
 
+# CHANGER LE COUT : DIFFERENCE DES CARTES ET NON DES VALEURS
 
 # This seed controls pretty much everything else
 npseed = 1
