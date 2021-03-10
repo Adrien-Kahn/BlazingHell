@@ -74,7 +74,7 @@ class machine:
 		n = len(self.data)
 		for k in range(n):
 			c += self.cost(k)
-# 			print(self.cost(k))
+			print(self.cost(k))
 		return c/n
 
 	
@@ -146,7 +146,7 @@ class machine:
 		return auto.final_state()
 
 
-bigdata = data(100, 0.5, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
+bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
 print("Data generated")
 
 daneel = machine(bigdata, mb_size = 30)

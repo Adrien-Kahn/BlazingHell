@@ -64,6 +64,8 @@ def gradient(h,x,y):
 
 # seed, moisture, value
 
+# data filters the data generated so that all its fires have burnt several cells
+
 def data(n, c_intercept, c_moisture, shape, firestart, revert_seed):
 	
 	df = pd.DataFrame(columns = ['seed', 'moisture', 'value'])
@@ -73,12 +75,17 @@ def data(n, c_intercept, c_moisture, shape, firestart, revert_seed):
 	ly = np.linspace(0,5,y,endpoint=False)
 	X,Y = np.meshgrid(lx,ly)
 	
-	for k in range(n):
+	k = 0
+	ndata = 0
+	while ndata < n:
 		moisture = perlin(X,Y,revert_seed,seed=k) + 0.5
 		auto = Automaton(c_intercept, c_moisture, shape, firestart, moisture)
 		value = auto.final_state()
-		df.loc[k] = [k, moisture, value]
-	
+		if len(value[value == 3]) > 1:	
+			df.loc[ndata] = [k, moisture, value]
+			ndata += 1
+			print(k,ndata)
+		k += 1
 	return df
 
 if __name__ == "__main__":
