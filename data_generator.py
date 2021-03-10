@@ -76,7 +76,7 @@ def data(n, c_intercept, c_moisture, shape, firestart, revert_seed):
 	for k in range(n):
 		moisture = perlin(X,Y,revert_seed,seed=k) + 0.5
 		auto = Automaton(c_intercept, c_moisture, shape, firestart, moisture)
-		value = auto.run()
+		value = auto.final_state()
 		df.loc[k] = [k, moisture, value]
 	
 	return df

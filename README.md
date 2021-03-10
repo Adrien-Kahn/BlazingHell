@@ -74,3 +74,11 @@ Can we fix this by isolating perlin in a different class ?
 We cannot
 
 What we will do then is specify to perlin the seed it should revert to after it has finished running
+
+
+
+- Test de résolution du problème du coût aléatoire avec des automates déterministes
+- Apprentissage : coût divisé par 10, mais les paramètres ne semblent pas converger vers ce à quoi on s'attend (-12, 18 au lieu de 0,-7 avec valeurs initiales -10,20), et ce même avec le coût défini localement
+- Solution potentielle : les données sont en réalité toutes pourries. Plus de 90% des feu ne contiennent qu'une cellule brûlé, ce qui encourage bêtement la machine à prendre des paramètres qui empêchent le feu de commencer.
+- Une solution consiste donc à filtrer les échantillon de donnée, et ne conserver que ceux qui ont plus d'une case brulé.
+- Ce qui s'est passé en réalité : le fait que les automates deviennent déterministes a limité la taille des feu. En effet, les paramètres du génerateurs étaient calibré pour avoir une taille de feu raisonnable, mais la taille des feu a été diminué puisque le déterminisme à essentiellement fait comme si le nombre d'étape pendant lequel une cellule est en feu est de 1. Ainsi nos feu étaient tous microscopiques.

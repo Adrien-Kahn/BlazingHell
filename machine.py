@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 # Pour commencer, pour pas trop se prendre la tête, on va fixer firestart constamment à x_max/2, y_max/2
 
 
-# The evalution of the global cost leads to very different values over the same instance, even for a dataset with n = 100. As such, we recommend averaging over many iteration though it will be very costly.
+# The evalution of the averaged cost of the dataset leads to very different values over the same instance, even for a dataset with n = 100. As such, we recommend averaging over many iteration though it will be very costly.
 
 # Initial cost: 229536.74
 # Initial cost 2: 162438.16
@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 # Initial cost 5: 226678.29
 # Initial cost 5: 153856.01
 # Initial cost 6: 186287.94
+
 
 # CHANGER LE COUT : DIFFERENCE DES CARTES ET NON DES VALEURS
 
@@ -28,9 +29,18 @@ np.random.seed(npseed)
 # This seed controls which data indices are chosen in minibatches
 rd.seed(0)
 
+
+# A function that output the square of the amount of different cells in a and b
+# It is used to define the cost of an output of the model
+
+def matdiff(a,b):
+	return len(a[a != b])**2
+
+
+
 class machine:
 	
-	def __init__(self, data, mb_size, c_intercept = 0, c_moisture = -6, h = 0.05, learning_rate = 0.000000005):
+	def __init__(self, data, mb_size, c_intercept = -10, c_moisture = 20, h = 1, learning_rate = 0.000001):
 		self.data = data
 		self.mb_size = mb_size
 		self.c_intercept = c_intercept
@@ -54,7 +64,7 @@ class machine:
 
 		auto = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
 		
-		return (auto.run() - value)**2
+		return matdiff(auto.final_state(), value)
 	
 	
 # 	Computes the average quadratic cost over all instances of data
@@ -79,19 +89,19 @@ class machine:
 
 # 		On calcule d'abord la prédiction sur le paramètre actuel			
 		auto_0 = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_0 = (auto_0.run() - value)**2
+		c_0 = matdiff(auto_0.final_state(), value)
 		
 # 		Puis avec chacun des paramètres augmenté de self.h
 # 		On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
 
 # 		c_intercept + h d'abord
 		auto_i = Automaton(self.c_intercept + self.h, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_i = (auto_i.run() - value)**2			
+		c_i = matdiff(auto_i.final_state(), value)
 		g_i = (c_i - c_0)/self.h
 			
 # 		c_moisture + h ensuite
 		auto_m = Automaton(self.c_intercept, self.c_moisture + self.h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_m = (auto_m.run() - value)**2			
+		c_m = matdiff(auto_m.final_state(), value)
 		g_m = (c_m - c_0)/self.h
 		
 		return g_i, g_m
@@ -133,7 +143,7 @@ class machine:
 	
 	def predict(self, moisture, firestart = (25,25)):
 		auto = Automaton(self.c_intercept, self.c_moisture, moisture.shape, firestart, moisture)
-		return auto.run()
+		return auto.final_state()
 
 
 bigdata = data(100, 0.5, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
@@ -141,12 +151,12 @@ print("Data generated")
 
 daneel = machine(bigdata, mb_size = 30)
 print("Initial cost: {}".format(daneel.fullcost()))
-print("Initial cost 2: {}".format(daneel.fullcost()))
-print("Initial cost 3: {}".format(daneel.fullcost()))
-print("Initial cost 4: {}".format(daneel.fullcost()))
-print("Initial cost 5: {}".format(daneel.fullcost()))
-print("Initial cost 5: {}".format(daneel.fullcost()))
-print("Initial cost 6: {}".format(daneel.fullcost()))
+# print("Initial cost 2: {}".format(daneel.fullcost()))
+# print("Initial cost 3: {}".format(daneel.fullcost()))
+# print("Initial cost 4: {}".format(daneel.fullcost()))
+# print("Initial cost 5: {}".format(daneel.fullcost()))
+# print("Initial cost 5: {}".format(daneel.fullcost()))
+# print("Initial cost 6: {}".format(daneel.fullcost()))
 
 print(daneel)
 
