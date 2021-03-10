@@ -1,5 +1,3 @@
-CHANGER LE COUT : DIFFERENCE DES CARTES ET NON DES VALEURS
-
 # Documentation rapide
 
 ### La Classe Cell
