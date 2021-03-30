@@ -22,8 +22,6 @@ import ray
 # Initial cost 6: 186287.94
 
 
-# CHANGER LE COUT : DIFFERENCE DES CARTES ET NON DES VALEURS
-
 # This seed controls pretty much everything else
 npseed = 1
 np.random.seed(npseed)
@@ -75,7 +73,7 @@ class machine:
 	
 	def __init__(self, data, mb_size, c_intercept = -10, c_moisture = 20, h = 1, learning_rate = 0.000001, remote = False):
 		
-		if remote and (not ray.is_initalized):
+		if remote and (not ray.is_initalized()):
 			ray.init(address = "auto")
 		
 		self.data = data
@@ -224,7 +222,7 @@ bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = n
 print("Data generated")
 
 daneel = machine(bigdata, mb_size = 30)
-print("Initial cost: {}".format(daneel.fullcost()))
+# print("Initial cost: {}".format(daneel.fullcost()))
 # print("Initial cost 2: {}".format(daneel.fullcost()))
 # print("Initial cost 3: {}".format(daneel.fullcost()))
 # print("Initial cost 4: {}".format(daneel.fullcost()))
@@ -237,7 +235,7 @@ print(daneel)
 
 for k in range(50):
 	daneel.learn_step()
-	print("Cost: {}".format(daneel.fullcost()))
+# 	print("Cost: {}".format(daneel.fullcost()))
 	print(daneel)
 
 if ray.is_initalized():
