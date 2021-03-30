@@ -118,11 +118,11 @@ setup_commands: []
 
 # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:
-    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/RayTest/rayenv/bin/activate; ray stop
-    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/RayTest/rayenv/bin/activate; ulimit -c unlimited; ray start --head --port=6379 --dashboard-host 0.0.0.0 --include-dashboard True --autoscaling-config=~/ray_bootstrap_config.yaml --num-cpus=6
+    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/BlazingHell/newenv/bin/activate; ray stop
+    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/BlazingHell/newenv/bin/activate; ulimit -c unlimited; ray start --head --port=6379 --dashboard-host 0.0.0.0 --include-dashboard True --autoscaling-config=~/ray_bootstrap_config.yaml --num-cpus=6
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
-    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/RayTest/rayenv/bin/activate; ray stop
-    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/RayTest/rayenv/bin/activate; ulimit -c unlimited; ray start --address=$RAY_HEAD_IP:6379 --num-cpus=6
+    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/BlazingHell/newenv/bin/activate; ray stop
+    - source /users/eleves-b/2019/adrien.kahn.x19/Desktop/BlazingHell/newenv/bin/activate; ulimit -c unlimited; ray start --address=$RAY_HEAD_IP:6379 --num-cpus=6
 

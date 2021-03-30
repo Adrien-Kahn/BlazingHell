@@ -1,0 +1,16 @@
+MANIFEST.in
+README.md
+screenshot.png
+setup.cfg
+setup.py
+gpustat/__init__.py
+gpustat/__main__.py
+gpustat/core.py
+gpustat/test_gpustat.py
+gpustat.egg-info/PKG-INFO
+gpustat.egg-info/SOURCES.txt
+gpustat.egg-info/dependency_links.txt
+gpustat.egg-info/entry_points.txt
+gpustat.egg-info/not-zip-safe
+gpustat.egg-info/requires.txt
+gpustat.egg-info/top_level.txt
