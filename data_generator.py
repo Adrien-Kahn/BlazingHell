@@ -84,7 +84,7 @@ def data(n, c_intercept, c_moisture, shape, firestart, revert_seed):
 		if len(value[value == 3]) > 1:	
 			df.loc[ndata] = [k, moisture, value]
 			ndata += 1
-			print(k,ndata)
+#			print(k,ndata)
 		k += 1
 	return df
 

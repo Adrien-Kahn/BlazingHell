@@ -73,7 +73,7 @@ class machine:
 	
 	def __init__(self, data, mb_size, c_intercept = -10, c_moisture = 20, h = 1, learning_rate = 0.000001, remote = False):
 		
-		if remote and (not ray.is_initalized()):
+		if remote and (not ray.is_initialized()):
 			ray.init(address = "auto")
 		
 		self.data = data
@@ -195,7 +195,7 @@ class machine:
 # 		we ask for a remote computation of all the gradients and we increment once the
 # 		computation is over
 		
-		futures = [remote_fgradient.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, self.h) for k in range(ll)]
+		futures = [remote_fgradient.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, self.h) for k in ll]
 		grad_list = ray.get(futures)
 		
 		for g_i, g_m in grad_list:
@@ -217,11 +217,16 @@ class machine:
 		auto = Automaton(self.c_intercept, self.c_moisture, moisture.shape, firestart, moisture)
 		return auto.final_state()
 
+print("\nBuilding database...\n")
 
 bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
-print("Data generated")
 
-daneel = machine(bigdata, mb_size = 30)
+print("Data generated\n")
+
+
+daneel = machine(bigdata, mb_size = 30, remote = True)
+
+
 # print("Initial cost: {}".format(daneel.fullcost()))
 # print("Initial cost 2: {}".format(daneel.fullcost()))
 # print("Initial cost 3: {}".format(daneel.fullcost()))
@@ -232,11 +237,16 @@ daneel = machine(bigdata, mb_size = 30)
 
 print(daneel)
 
+t0 = time()
 
-for k in range(50):
+for k in range(300):
 	daneel.learn_step()
 # 	print("Cost: {}".format(daneel.fullcost()))
 	print(daneel)
 
-if ray.is_initalized():
+if ray.is_initialized():
 	ray.shutdown()
+
+print("Computation over\n")
+print("Learning phase time: {:.2f}s\n\n".format(time() - t0)
+
