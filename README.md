@@ -29,7 +29,7 @@ Les méthodes :
 Le reste c'est essentiellement du bazar qui sert à visualiser l'automate mais qui n'est pas fondamentalement important. Il faut noter que `evolution_animation` ne fonctionne pas (et c'est bien dommage mais c'est la vie).
 
 
-# Idées
+# IdÃ©es
 
 ### Descente de gradient
 
