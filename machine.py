@@ -121,7 +121,7 @@ class machine:
 		
 		return c/m
 
-	
+
 # 	Computes the average quadratic cost over all data points
 # 	For each data point, the cost is averaged over m computations
 	
