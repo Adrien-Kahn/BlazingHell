@@ -314,7 +314,7 @@ m2 = 40
 c_i, c_m = daneel.c_intercept, daneel.c_moisture
 daneel.c_intercept, daneel.c_moisture =	1, -7
 print("\nTarger log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-daneel.c_intercept, daneel.c_moisture = ci, c_m
+daneel.c_intercept, daneel.c_moisture = c_i, c_m
 
 
 print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
