@@ -4,4 +4,4 @@ git:
 	git push
 
 ssh:
-	ssh adrien.kahn.x19@gironde.polytechnique.fr
+	ssh -Y adrien.kahn.x19@albatros.polytechnique.fr
