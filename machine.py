@@ -272,7 +272,7 @@ bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = n
 print("Data generated\n")
 
 
-daneel = machine(bigdata, mb_size = 30, c_intercept = 0.54, c_moisture = -6.31, h = 0.1, learning_rate = 0.0000003, remote = True, cluster = True)
+daneel = machine(bigdata, mb_size = 30, c_intercept = 0.56, c_moisture = -6.30, h = 0.1, learning_rate = 0.0000003, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -313,12 +313,22 @@ m2 = 40
 
 c_i, c_m = daneel.c_intercept, daneel.c_moisture
 daneel.c_intercept, daneel.c_moisture =	1, -7
-print("\nTarger log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 daneel.c_intercept, daneel.c_moisture = c_i, c_m
 
 
 print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 print("Initiating learning phase...\n")
 
 for k in range(100):
