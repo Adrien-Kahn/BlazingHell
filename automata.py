@@ -90,7 +90,7 @@ class Automaton:
 				
 # 				WE TEMPORARILY CHANGE THIS LINE TO MAKE IT DETERMINISTIC (replaced np.random.random by 0.5)
 				
-				if 0.5 < p:
+				if np.random.random() < p:
 					c.state = 2
 					self.fire_nb += 1
 					new_cache.update([index] + self.neighborsMatrix[index])

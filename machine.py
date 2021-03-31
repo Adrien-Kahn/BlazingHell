@@ -87,10 +87,13 @@ remote_fcost = ray.remote(fcost)
 
 class machine:
 	
-	def __init__(self, data, mb_size, c_intercept = -10, c_moisture = 20, h = 1, learning_rate = 0.000001, remote = False):
+	def __init__(self, data, mb_size, c_intercept = -10, c_moisture = 20, h = 1, learning_rate = 0.000001, remote = False, cluster = False):
 		
 		if remote and (not ray.is_initialized()):
-			ray.init(address = "auto")
+			if cluster:
+				ray.init(address = "auto")
+			else:
+				ray.init()
 		
 		self.data = data
 		self.mb_size = mb_size
@@ -257,22 +260,26 @@ bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = n
 print("Data generated\n")
 
 
-daneel = machine(bigdata, mb_size = 30, remote = True)
+daneel = machine(bigdata, mb_size = 30, remote = True, cluster = True)
 
-
-# print("Initial cost: {}".format(daneel.fullcost()))
-# print("Initial cost 2: {}".format(daneel.fullcost()))
-# print("Initial cost 3: {}".format(daneel.fullcost()))
-# print("Initial cost 4: {}".format(daneel.fullcost()))
-# print("Initial cost 5: {}".format(daneel.fullcost()))
-# print("Initial cost 5: {}".format(daneel.fullcost()))
-# print("Initial cost 6: {}".format(daneel.fullcost()))
-
+print("Machine built: \n")
 print(daneel)
+
+# With m = 10 we get a full cost with precision around 1%
+m = 20
 
 t0 = time()
 
-for k in range(10):
+for k in range(6):
+	print("Initial cost averaged {} times:\t{}".format(m, daneel.fullcost(m)))
+
+print("\nCost computation time: {:.2f}s\n\n".format(time() - t0))
+
+print("\n")
+
+t1 = time()
+
+for k in range(3):
 	daneel.learn_step()
 # 	print("Cost: {}".format(daneel.fullcost()))
 	print(daneel)
@@ -281,5 +288,5 @@ if ray.is_initialized():
 	ray.shutdown()
 
 print("Computation over\n")
-print("Learning phase time: {:.2f}s\n\n".format(time() - t0))
+print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
 
