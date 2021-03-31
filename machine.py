@@ -41,28 +41,33 @@ def matdiff(a,b):
 # all the required arguments
 # This way we can easily make it remote
 
-def fgradient(moisture, value, c_intercept, c_moisture, h):
+def fgradient(moisture, value, c_intercept, c_moisture, h, m):
 
 	x,y = moisture.shape
-
-# 		On calcule d'abord la prédiction sur le paramètre actuel			
-	auto_0 = Automaton(c_intercept, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-	c_0 = matdiff(auto_0.final_state(), value)
+	
+	g_i = 0
+	g_m = 0
+	
+	for k in range(m):
 		
-# 		Puis avec chacun des paramètres augmenté de self.h
-# 		On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
+#		On calcule d'abord la prédiction sur le paramètre actuel			
+		auto_0 = Automaton(c_intercept, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c_0 = matdiff(auto_0.final_state(), value)
+		
+#		Puis avec chacun des paramètres augmenté de self.h
+#		On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
 
-# 		c_intercept + h d'abord
-	auto_i = Automaton(c_intercept + h, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-	c_i = matdiff(auto_i.final_state(), value)
-	g_i = (c_i - c_0)/h
+#		c_intercept + h d'abord
+		auto_i = Automaton(c_intercept + h, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c_i = matdiff(auto_i.final_state(), value)
+		g_i += (c_i - c_0)/h
 			
-# 		c_moisture + h ensuite
-	auto_m = Automaton(c_intercept, c_moisture + h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-	c_m = matdiff(auto_m.final_state(), value)
-	g_m = (c_m - c_0)/h
+#		c_moisture + h ensuite
+		auto_m = Automaton(c_intercept, c_moisture + h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c_m = matdiff(auto_m.final_state(), value)
+		g_m += (c_m - c_0)/h
 		
-	return g_i, g_m
+	return g_i / m, g_m / m
 
 
 remote_fgradient = ray.remote(fgradient)
@@ -151,42 +156,49 @@ class machine:
 
 	
 # 	Computes the approximation of the gradient for the instance of data at index k
+# 	The computed value is averaged over m computations
 	
-	def gradient(self, k):
+	def gradient(self, k, m):
 		
 		moisture = self.data.iloc[k]['moisture']
 		value = self.data.iloc[k]['value']
 		
 		x,y = moisture.shape
-
-# 		On calcule d'abord la prédiction sur le paramètre actuel			
-		auto_0 = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_0 = matdiff(auto_0.final_state(), value)
 		
-# 		Puis avec chacun des paramètres augmenté de self.h
-# 		On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
+		g_i = 0
+		g_m = 0
+		
+		for i in range(m):
 
-# 		c_intercept + h d'abord
-		auto_i = Automaton(self.c_intercept + self.h, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_i = matdiff(auto_i.final_state(), value)
-		g_i = (c_i - c_0)/self.h
+#			On calcule d'abord la prédiction sur le paramètre actuel			
+			auto_0 = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			c_0 = matdiff(auto_0.final_state(), value)
 			
-# 		c_moisture + h ensuite
-		auto_m = Automaton(self.c_intercept, self.c_moisture + self.h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_m = matdiff(auto_m.final_state(), value)
-		g_m = (c_m - c_0)/self.h
+#			Puis avec chacun des paramètres augmenté de self.h
+#			On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
+	
+#			c_intercept + h d'abord
+			auto_i = Automaton(self.c_intercept + self.h, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			c_i = matdiff(auto_i.final_state(), value)
+			g_i += (c_i - c_0)/self.h
+				
+#			c_moisture + h ensuite
+			auto_m = Automaton(self.c_intercept, self.c_moisture + self.h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			c_m = matdiff(auto_m.final_state(), value)
+			g_m += (c_m - c_0)/self.h
 		
-		return g_i, g_m
+		return g_i / m, g_m / m
 
-	
-	def learn_step(self):
+#	Performs a step of the gradient descent
+#	The gradient computed on each data point is averaged over m computations
+	def learn_step(self, m):
 		if self.remote:
-			self.remote_learn_step()
+			self.remote_learn_step(m)
 		else:
-			self.normal_learn_step()
+			self.normal_learn_step(m)
 	
 	
-	def normal_learn_step(self):
+	def normal_learn_step(self, m):
 		
 # 		First we get a subset of mb_size element of data
 # 		We randomly select rows, and each row might get selected more than once
@@ -201,7 +213,7 @@ class machine:
 		grad_moisture = 0
 		
 		for k in ll:			
-			g_i, g_m = self.gradient(k)
+			g_i, g_m = self.gradient(k, m)
 			
 			grad_intercept += g_i
 			grad_moisture += g_m
@@ -215,7 +227,7 @@ class machine:
 		self.c_moisture -= grad_moisture
 
 	
-	def remote_learn_step(self):
+	def remote_learn_step(self, m):
 		
 # 		Ray was already initialized in the constructor if ray.remote
 # 		so we don't need to take care of it here
@@ -231,7 +243,7 @@ class machine:
 # 		we ask for a remote computation of all the gradients and we increment once the
 # 		computation is over
 		
-		futures = [remote_fgradient.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, self.h) for k in ll]
+		futures = [remote_fgradient.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, self.h, m) for k in ll]
 		grad_list = ray.get(futures)
 		
 		for g_i, g_m in grad_list:
@@ -245,9 +257,9 @@ class machine:
 		self.c_moisture -= grad_moisture
 		
 	
-	def learning(self,n):
+	def learning(self, n, m):
 		for k in range(n):
-			self.learn_step()
+			self.learn_step(m)
 	
 	def predict(self, moisture, firestart = (25,25)):
 		auto = Automaton(self.c_intercept, self.c_moisture, moisture.shape, firestart, moisture)
