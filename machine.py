@@ -68,6 +68,22 @@ def fgradient(moisture, value, c_intercept, c_moisture, h):
 remote_fgradient = ray.remote(fgradient)
 
 
+# Same for the remote version of cost
+def fcost(moisture, value, c_intercept, c_moisture, m):
+	
+	x,y = moisture.shape
+	c = 0
+	
+	for k in range(m):
+		auto = Automaton(c_intercept, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		c += matdiff(auto.final_state(), value)
+	
+	return c/m
+
+
+remote_fcost = ray.remote(fcost)
+
+
 
 class machine:
 	
@@ -89,29 +105,46 @@ class machine:
 		return "c_intercept = {} \nc_moisture = {} \n".format(self.c_intercept, self.c_moisture)
 	
 	
-# 	Computes the quadratic cost of the prediction on the instance k of data
+# 	Computes the quadratic cost on the k-th data point averaged over m computations
 	
-	def cost(self, k):
+	def cost(self, k, m):
 		
 		moisture = self.data.iloc[k]['moisture']
 		value = self.data.iloc[k]['value']
-		
 		x,y = moisture.shape
-
-		auto = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
 		
-		return matdiff(auto.final_state(), value)
-	
-	
-# 	Computes the average quadratic cost over all instances of data
+		c = 0
+		
+		for i in range(m):
+			auto = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			c += matdiff(auto.final_state(), value)
+		
+		return c/m
 
-	def fullcost(self):
+	
+# 	Computes the average quadratic cost over all data points
+# 	For each data point, the cost is averaged over m computations
+	
+	def fullcost(self, m = 1):
+		if self.remote:
+			return self.remote_fullcost(m)
+		else:
+			return self.normal_fullcost(m)
+	
+
+	def normal_fullcost(self, m):
 		c = 0
 		n = len(self.data)
 		for k in range(n):
-			c += self.cost(k)
-			print(self.cost(k))
+			c += self.cost(k, m)
 		return c/n
+	
+	
+	def remote_fullcost(self, m):
+		n = len(self.data)
+		futures = [remote_fcost.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, m) for k in range(n)]
+		cost_list = ray.get(futures)
+		return np.average(cost_list)
 
 	
 # 	Computes the approximation of the gradient for the instance of data at index k
@@ -239,7 +272,7 @@ print(daneel)
 
 t0 = time()
 
-for k in range(300):
+for k in range(10):
 	daneel.learn_step()
 # 	print("Cost: {}".format(daneel.fullcost()))
 	print(daneel)
