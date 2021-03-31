@@ -92,7 +92,7 @@ remote_fcost = ray.remote(fcost)
 
 class machine:
 	
-	def __init__(self, data, mb_size, c_intercept = -10, c_moisture = 20, h = 1, learning_rate = 0.000001, remote = False, cluster = False):
+	def __init__(self, data, mb_size, c_intercept = 0, c_moisture = 0, h = 1, learning_rate = 0.00001, remote = False, cluster = False):
 		
 		if remote and (not ray.is_initialized()):
 			if cluster:
@@ -110,7 +110,7 @@ class machine:
 	
 	
 	def __str__(self):
-		return "c_intercept = {} \nc_moisture = {} \n".format(self.c_intercept, self.c_moisture)
+		return "c_intercept = {:.2f} \nc_moisture = {:.2f} \n".format(self.c_intercept, self.c_moisture)
 	
 	
 # 	Computes the quadratic cost on the k-th data point averaged over m computations
@@ -272,29 +272,61 @@ bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = n
 print("Data generated\n")
 
 
-daneel = machine(bigdata, mb_size = 30, remote = True, cluster = True)
+daneel = machine(bigdata, mb_size = 30, c_intercept = 0.54, c_moisture = -6.31, h = 0.1, learning_rate = 0.0000003, remote = True, cluster = True)
 
-print("Machine built: \n")
+print("\n\nMachine built: \n")
+
+print("Initial parameters:\n")
 print(daneel)
 
+
+
+"""
 # With m = 10 we get a full cost with precision around 1%
-m = 20
+a = 20
 
 t0 = time()
 
 for k in range(6):
-	print("Initial cost averaged {} times:\t{}".format(m, daneel.fullcost(m)))
+	print("Initial cost averaged {} times:\t{}".format(a, daneel.fullcost(a)))
 
 print("\nCost computation time: {:.2f}s\n\n".format(time() - t0))
 
 print("\n")
 
+# At b = 30, we start having reasonably small variation (around 20% at most)
+b = 30
+for k in range(10):
+	x,y = daneel.gradient(0,b)
+	print("Gradient at point 0 averaged {} times:\t{}\t{}".format(b, x, y))
+
+"""
+
 t1 = time()
 
-for k in range(3):
-	daneel.learn_step()
-# 	print("Cost: {}".format(daneel.fullcost()))
+# for cost computation
+m1 = 20
+
+# for gradient computation
+m2 = 40
+
+
+c_i, c_m = daneel.c_intercept, daneel.c_moisture
+daneel.c_intercept, daneel.c_moisture =	1, -7
+print("\nTarger log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+daneel.c_intercept, daneel.c_moisture = ci, c_m
+
+
+print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+
+print("Initiating learning phase...\n")
+
+for k in range(100):
+	daneel.learn_step(m2)
+	print("Log cost at step {}:\t{:.2f}\n".format(k, np.log(daneel.fullcost(m1))))
+	print("Parameters at step {}:".format(k))
 	print(daneel)
+	print("\n")
 
 if ray.is_initialized():
 	ray.shutdown()
