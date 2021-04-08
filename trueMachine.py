@@ -3,11 +3,16 @@ import pandas as pd
 import numpy as np
 import random as rd
 from time import time
+import os
 import matplotlib.pyplot as plt
 
 import ray
 
-# Pour commencer, pour pas trop se prendre la tête, on va fixer firestart constamment à x_max/2, y_max/2
+
+# We now will have to ponder the question of firestart
+
+
+
 
 # This seed controls pretty much everything else
 npseed = 1
@@ -15,6 +20,23 @@ np.random.seed(npseed)
 
 # This seed controls which data indices are chosen in minibatches
 rd.seed(0)
+
+
+
+def create_dataframe(_path): #_path = l'adresse du dossier contenant tous les sous-dossiers 
+    dictionnaire = {}
+    for filename in os.scandir(_path): # filename = l'ensemble des sous-dossiers
+        for entry in os.scandir(filename.path): # entry = l'ensemble des dossiers csv
+            if entry.name=='vegetation_dansity.csv':
+                vegetation_dansity=np.loadtxt(entry.name,delimiter=",", skiprows=1)
+            elif entry.name=='burned_area.csv':
+                burned_area=np.loadtxt(entry.name,delimiter=",", skiprows=1)
+            elif entry.name=='humidity.csv':
+                humidity=np.loadtxt(entry.name,delimiter=",", skiprows=1)
+        dictionnaire[filename.name]=(vegetation_dansity, burned_area, humidity)
+    return (pd.DataFrame.from_dict(dictionnaire, orient = 'index'))
+
+
 
 
 # A function that output the square of the amount of different cells in a and b

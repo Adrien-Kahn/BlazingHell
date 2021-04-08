@@ -27,11 +27,14 @@ c_fuel = 10
 
 class Cell:
 	
-	def __init__(self, state, moisture):
+	def __init__(self, state, moisture, vd, windx, windy):
 		self.state = state
 		
 		self.moisture = moisture
-		
+		self.vd = vd
+		self.windx = windx
+		self.windy = windy
+				
 		self.fuel = c_fuel
 		
 	def __str__(self):
