@@ -10,17 +10,29 @@ import os
 
 
 
-def create_dataframe(_path): #_path = l'adresse du dossier contenant tous les sous-dossiers 
-	dictionnaire = {}
-	for filename in os.scandir(_path): # filename = l'ensemble des sous-dossiers
+def create_dataframe(path): # path: relative path to the folder containing all fire instances
+	
+	k = 0
+	df = pd.DataFrame(columns = ['entry number', 'burned area', 'vegetation density', 'humidity'])
+	
+	for filename in os.scandir(path):
 		print("Loading " + filename.name)
-		for entry in os.scandir(filename.path): # entry = l'ensemble des dossiers csv
-			if entry.name=='vegetation_dansity.csv':
-				vegetation_dansity=np.loadtxt(_path + '/' + filename.name + '/' + entry.name,delimiter=",", skiprows=1)
-			elif entry.name=='burned_area.csv':
-				burned_area=np.loadtxt(_path + '/' + filename.name + '/' + entry.name,delimiter=",", skiprows=1)
-			elif entry.name=='humidity.csv':
-				humidity=np.loadtxt(_path + '/' + filename.name + '/' + entry.name,delimiter=",", skiprows=1)
-		dictionnaire[filename.name]=(vegetation_dansity, burned_area, humidity)
-	return (pd.DataFrame.from_dict(dictionnaire, orient = 'index'))
+		
+		number = [int(i) for i in filename.name.split("_") if i.isdigit()][0]
+		
+		for entry in os.scandir(filename.path):
+			
+			prefix = path + '/' + filename.name + '/'
+			
+			if entry.name == 'vegetation_dansity.csv':
+				vegetation_density = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+			elif entry.name == 'burned_area.csv':
+				burned_area = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+			elif entry.name == 'humidity.csv':
+				humidity = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+			
+		df.loc[k] = [number, burned_area, vegetation_density, humidity]
+		k += 1
+
+	return df
 
