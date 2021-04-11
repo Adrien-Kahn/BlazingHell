@@ -9,8 +9,8 @@ from time import time
 def sigmoid(x):
 	return 1/(1 + np.exp(-x))
 
-# Chaque cellule de l'automate contient un objet cell qui contient toutes les données nécéssaires au calcul de la fonction de transition
-# Pour commencer Cell contient juste state et moisture
+
+# The wind makes everything more complicated
 
 # Cell.state vaut :
 #1 pour une cellule enflammable
@@ -42,9 +42,22 @@ class Cell:
 	
 
 
+
+# Just a simple struct-like class to store all the coefficient we need in an efficient way
+class Coef:
+	def __init__(self, c_intercept, c_moisture, c_vd, c_windx, c_windy):
+		self.intercept = c_intercept
+		self.moisture = c_moisture
+		self.vd = c_vd
+		self.windx = c_windx
+		self.windy = c_windy
+
+
+
+
 class Automaton:
 	
-	def __init__(self, c_intercept, c_moisture, shape, firestart, moisture):
+	def __init__(self, coef, shape, firestart, moisture, vd, windx, windy):
 
 		self.ii, self.jj = shape
 
@@ -52,12 +65,11 @@ class Automaton:
 		mat = np.zeros(shape, dtype = object)
 		for i in range(self.ii):
 			for j in range(self.jj):
- 				mat[i,j] = Cell(1, moisture[i,j])
+ 				mat[i,j] = Cell(1, moisture[i,j], vd[i,j], windx[i,j], windy[i,j])
 		mat[firestart].state = 2
 		self.matrix = mat
 		
-		self.c_intercept = c_intercept
-		self.c_moisture = c_moisture
+		self.c = coef
 		self.time = 0
 		self.fire_nb = 1
 
