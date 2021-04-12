@@ -25,6 +25,34 @@ norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
 c_fuel = 10
 
+
+#    1
+#  3   4
+#    2
+	 
+# Builds a matrix that contains the dict of the indexes neighbors of the current index
+# Each entry of the dict is 
+# This will be called once in the machine object since all automata will have the same shape
+# That way we save some time instead of rebuilding it over and over again
+def neighbor_matrix(shape):
+	ii, jj = shape
+	neighborsMatrix = np.zeros(shape, dtype = object)
+	for i in range(ii):
+		for j in range(jj):
+			neighborsMatrix[i,j] = {}
+			if i != 0:
+				neighborsMatrix[i, j][(i - 1, j)] = 1
+			if i != ii - 1:
+				neighborsMatrix[i, j][(i + 1, j)] = 2
+			if j != 0:
+				neighborsMatrix[i, j][(i, j - 1)] = 3
+			if j != jj - 1:
+				neighborsMatrix[i, j][(i, j + 1)] = 4
+	return neighborsMatrix
+
+
+
+
 class Cell:
 	
 	def __init__(self, state, moisture, vd, windx, windy):
@@ -57,7 +85,7 @@ class Coef:
 
 class Automaton:
 	
-	def __init__(self, coef, shape, firestart, moisture, vd, windx, windy):
+	def __init__(self, coef, shape, neighborsMatrix, firestart, moisture, vd, windx, windy):
 
 		self.ii, self.jj = shape
 
@@ -69,19 +97,23 @@ class Automaton:
 		mat[firestart].state = 2
 		self.matrix = mat
 		
+		self.neighborsMatrix = neighborsMatrix
 		self.c = coef
 		self.time = 0
 		self.fire_nb = 1
-
-#		builds a matrix that contains the list of the indexes neighbors of the current index
-		self.neighborsMatrix = np.zeros(shape, dtype = object)
-		for ci in range(self.ii):
-			for cj in range(self.jj):
-				self.neighborsMatrix[ci,cj] = [(i,j) for j in range(cj - 1, cj + 2) for i in range(ci - 1, ci + 2) if  i >= 0 and i < self.ii and j >= 0 and j < self.jj and (i != ci or j != cj)]
 		
-#		builds a set that will contain the indexes of burning cells and their neighbors
-		self.cache = set([firestart] + self.neighborsMatrix[firestart])
-				
+# 		Builds a dict that contains all burning cells and their neighboring burnable cells
+# 		Each entry is the coordinate of such a cell
+# 		Each value is a list that contains indications on which neighbors is burning:
+# 			1 -> upper neighbor (smaller i)
+# 			2 -> lower neighbor (bigger i)
+# 			3 -> left  neighbor (smaller j)
+# 			4 -> right neighbor (bigger j)
+
+		self.cache = {}
+		d = neighborsMatrix[firestart]
+		for coor in d:
+			self.cache.setdefault(coor, []).append(d)
 	
 	
 	def time_step(self):
@@ -173,7 +205,7 @@ class Automaton:
 
 # Tests and visualization
 
-if __name__ == "__main__":
+if __name__ != "__main__":
 	
 	n = 100
 	

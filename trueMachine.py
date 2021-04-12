@@ -1,4 +1,5 @@
 from trueAutomata import Automaton
+from trueAutomata import neighbor_matrix
 import pandas as pd
 import numpy as np
 import random as rd
@@ -127,7 +128,6 @@ class machine:
 		self.h = h
 		self.learning_rate = learning_rate
 		self.remote = remote
-	
 	
 	def __str__(self):
 		return "c_intercept = {:.2f} \nc_moisture = {:.2f} \n".format(self.c_intercept, self.c_moisture)
