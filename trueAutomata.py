@@ -23,7 +23,7 @@ norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
 # Une cellule enflammée reste dans cet état pendant c_fuel étapes
 
-c_fuel = 10
+c_fuel = 5
 
 
 #    1
@@ -34,7 +34,7 @@ c_fuel = 10
 # Each entry of the dict is 
 # This will be called once in the machine object since all automata will have the same shape
 # That way we save some time instead of rebuilding it over and over again
-def neighbor_matrix(shape):
+def neighbors_matrix(shape):
 	ii, jj = shape
 	neighborsMatrix = np.zeros(shape, dtype = object)
 	for i in range(ii):
@@ -98,7 +98,7 @@ class Automaton:
 		self.matrix = mat
 		
 		self.neighborsMatrix = neighborsMatrix
-		self.c = coef
+		self.coef = coef
 		self.time = 0
 		self.fire_nb = 1
 		
@@ -111,41 +111,123 @@ class Automaton:
 # 			4 -> right neighbor (bigger j)
 
 		self.cache = {}
+		self.cache[firestart] = "fire"
 		d = neighborsMatrix[firestart]
 		for coor in d:
-			self.cache.setdefault(coor, []).append(d)
+			self.cache.setdefault(coor, []).append(d[coor])
 	
 	
 	def time_step(self):
+				
+#		new_cache will replace self.cache in the next step
+		new_cache = {}
 		
-#		we do not copy the matrix but update the current one
-#		assuming that cache indeed contains what we want it to, if we do not count the number of neighboring burning cells, we do not need the entire former state to compute the future step of a single cell
-		
-#		new_cache will contain the indexes of burning cells and their neighbors in the next time step
-		new_cache = set([])
-		
-#		we loop over the indexes in cache
+#		we loop over the entries in cache
 		for index in self.cache:
 			c = self.matrix[index]
 
-#			if the cell is not yet burned, we check if it catches on fire
-			if c.state == 1:
-#				WE DO NOT COUNT THE NUMBER OF NEIGHBORING BURNING CELLS
-				p = sigmoid(self.c_intercept + self.c_moisture*c.moisture)
-				
-				if np.random.random() < p:
-					c.state = 2
-					self.fire_nb += 1
-					new_cache.update([index] + self.neighborsMatrix[index])
-			
+
 # 			if the cell is burning, we decrease fuel and check whether there is still left
-			if c.state == 2:
+			if self.cache[index] == "fire":
+				
+				# For testing purpose
+				if c.state != 2:
+					print("Big Problem !")
+				
 				c.fuel -= 1
 				if c.fuel == 0:
 					c.state = 3
 					self.fire_nb -= 1
 				else:
-					new_cache.update([index] + self.neighborsMatrix[index])
+					new_cache[index] = "fire"
+					d = self.neighborsMatrix[index]
+					for coor in d:
+						if new_cache.setdefault(coor, []) != "fire":
+							new_cache[coor].append(d[coor])
+
+
+
+#			if the cell is not yet burned, we check if it catches on fire
+			elif c.state == 1:
+				
+#				This is where the fun begins
+				
+# 				Here is the inverted diagram that indicates where the fire is based on the number
+#    2
+#  4   3
+#    1
+				
+# 				b will help us get out of here faster if ignition has already happened
+				b = True				
+
+				s = self.coef.intercept + self.coef.moisture * c.moisture + self.coef.vd * c.vd
+				
+# 				For each individual neighboring fire, we check for ignition
+				l = self.cache[index]
+				
+# 				A cell is burning below (higher i) the current cell
+				if b:
+					if 1 in l:
+						p = sigmoid(s + self.coef.windx * c.windx)
+						if np.random.random() < p:
+							
+# 							Changing the state to burning
+							c.state = 2
+							self.fire_nb += 1
+# 							Adding the coordinates to new_cache
+							new_cache[index] = "fire"
+							d = self.neighborsMatrix[index]
+							for coor in d:
+								if new_cache.setdefault(coor, []) != "fire":
+									new_cache[coor].append(d[coor])
+# 	 						Not checking whether other neighboring cells lead to ignition
+							b = False
+
+
+# 				A cell is burning above (lower i) the current cell
+				if b:
+					if 2 in l:
+						p = sigmoid(s - self.coef.windx * c.windx)
+						if np.random.random() < p:
+							c.state = 2
+							self.fire_nb += 1
+							new_cache[index] = "fire"
+							d = self.neighborsMatrix[index]
+							for coor in d:
+								if new_cache.setdefault(coor, []) != "fire":
+									new_cache[coor].append(d[coor])
+							b = False
+					
+
+# 				A cell is burning to the right (higher j) of the current cell
+				if b:
+					if 3 in l:
+						p = sigmoid(s - self.coef.windy * c.windy)
+						if np.random.random() < p:
+							c.state = 2
+							self.fire_nb += 1
+							new_cache[index] = "fire"
+							d = self.neighborsMatrix[index]
+							for coor in d:
+								if new_cache.setdefault(coor, []) != "fire":
+									new_cache[coor].append(d[coor])
+							b = False
+
+
+# 				A cell is burning to the left (lower j) of the current cell
+				if b:
+					if 4 in l:
+						p = sigmoid(s + self.coef.windy * c.windy)
+						if np.random.random() < p:
+							c.state = 2
+							self.fire_nb += 1
+							new_cache[index] = "fire"
+							d = self.neighborsMatrix[index]
+							for coor in d:
+								if new_cache.setdefault(coor, []) != "fire":
+									new_cache[coor].append(d[coor])
+							b = False
+
 			
 		self.cache = new_cache		
 		self.time += 1
@@ -194,35 +276,43 @@ class Automaton:
 		sm[sm == 3] = np.array([0,0,0])
 		return sm
 
-	def evolution_animation(self):
-		fig, ax = plt.subplots()
-		im = ax.imshow(self.state_matrix(), animated = True)
-		def update(x):
-			im.set_data(self.state_matrix())
-			self.time_step()
-		FuncAnimation(fig, update, interval = 300)
 
 
 # Tests and visualization
 
-if __name__ != "__main__":
-	
+if __name__ == "__main__":
+		
 	n = 100
+	nshape = (n,n)
+	fs = (int(n/2), int(n/2))
+	
+	nM = neighbors_matrix((n,n))
+	coef = Coef(0, -7, 0, 0, 5)
 	
 	x = np.linspace(-1,1,n)
 	X,Y = np.meshgrid(x,x)
 	
-	auto = Automaton(c_intercept = 4, c_moisture = -7, shape = (n,n), firestart = (int(n/2), int(n/2)), moisture = X**2 + Y**2)
+	moisture = X**2 + Y**2
+	vd = (X + 1)**2 / 4
+	windx = np.full(nshape, 1)
+	windy = np.full(nshape, 1)
 	
-	fs = auto.final_state()
-	plt.imshow(fs)
-	print(len(fs[fs == 3]))
+	auto = Automaton(coef, nshape, nM, fs, moisture, vd, windx, windy)
 	
-"""
+	
 	fig, ax = plt.subplots()
 	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
 	def update(x):
 		im.set_array(auto.state_matrix())
 		auto.time_step()
 	ani = FuncAnimation(fig, update, interval = 100)
+
+
 """
+	
+	fs = auto.final_state()
+	plt.imshow(fs)
+	print("Burnt cells: {}".format(len(fs[fs == 3])))
+	
+"""
+
