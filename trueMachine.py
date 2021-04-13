@@ -1,5 +1,6 @@
 from trueAutomata import Automaton
-from trueAutomata import neighbor_matrix
+from trueAutomata import neighbors_matrix
+from trueAutomata import Coef
 import pandas as pd
 import numpy as np
 import random as rd
@@ -7,10 +8,12 @@ from time import time
 import os
 import matplotlib.pyplot as plt
 
-import ray
+# import ray
 
 
 # We now will have to ponder the question of firestart
+
+# To start, we take for firestart the point with the highest value in the burned area array
 
 
 
@@ -24,10 +27,12 @@ rd.seed(0)
 
 
 # Builds a dataframe by fetching data from the folder indicated in path
-def create_dataframe(path): # path: relative path to the folder containing all fire instances
+# path: relative path to the folder containing all fire instances
+#  n: optionnal parameter to limit the number of entries fetched
+def create_dataframe(path, n = -1):
 	
 	k = 0
-	df = pd.DataFrame(columns = ['entry number', 'burned area', 'vegetation density', 'humidity'])
+	df = pd.DataFrame(columns = ['entry number', 'value', 'moisture', 'vd', 'windx', 'windy', 'firestart'])
 	
 	for filename in os.scandir(path):
 		print("Loading " + filename.name)
@@ -39,14 +44,20 @@ def create_dataframe(path): # path: relative path to the folder containing all f
 			prefix = path + '/' + filename.name + '/'
 			
 			if entry.name == 'vegetation_dansity.csv':
-				vegetation_density = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+				vd = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 			elif entry.name == 'burned_area.csv':
-				burned_area = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+				value = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 			elif entry.name == 'humidity.csv':
-				humidity = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-			
-		df.loc[k] = [number, burned_area, vegetation_density, humidity]
+				moisture = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+		
+		# Get the argmax of burned area for firestart
+		firestart = np.unravel_index(value.argmax(), value.shape)
+		
+		df.loc[k] = [number, value, moisture, vd, 0, 0, firestart]
 		k += 1
+		
+		if k == n:
+			return df
 
 	return df
 
@@ -55,6 +66,8 @@ def create_dataframe(path): # path: relative path to the folder containing all f
 # It is used to define the cost of an output of the model
 
 def matdiff(a,b):
+	print(a.shape)
+	print(b.shape)
 	return len(a[a != b])**2
 
 
@@ -91,7 +104,7 @@ def fgradient(moisture, value, c_intercept, c_moisture, h, m):
 	return g_i / m, g_m / m
 
 
-remote_fgradient = ray.remote(fgradient)
+# remote_fgradient = ray.remote(fgradient)
 
 
 # Same for the remote version of cost
@@ -107,13 +120,13 @@ def fcost(moisture, value, c_intercept, c_moisture, m):
 	return c/m
 
 
-remote_fcost = ray.remote(fcost)
+# remote_fcost = ray.remote(fcost)
 
 
 
 class machine:
 	
-	def __init__(self, data, mb_size, c_intercept = 0, c_moisture = 0, h = 1, learning_rate = 0.00001, remote = False, cluster = False):
+	def __init__(self, data, mb_size, coef_ini, h, learning_rate, remote = False, cluster = False):
 		
 		if remote and (not ray.is_initialized()):
 			if cluster:
@@ -123,29 +136,33 @@ class machine:
 		
 		self.data = data
 		self.mb_size = mb_size
-		self.c_intercept = c_intercept
-		self.c_moisture = c_moisture
+		self.coef = coef_ini
 		self.h = h
 		self.learning_rate = learning_rate
 		self.remote = remote
+		self.shape = data.iloc[0]['value'].shape
+		self.neighborsMatrix = neighbors_matrix(self.shape)
 	
 	def __str__(self):
-		return "c_intercept = {:.2f} \nc_moisture = {:.2f} \n".format(self.c_intercept, self.c_moisture)
+		return str(self.coef)
 	
 	
 # 	Computes the quadratic cost on the k-th data point averaged over m computations
 	
 	def cost(self, k, m):
-		
+
+		value = self.data.iloc[k]['value']		
 		moisture = self.data.iloc[k]['moisture']
-		value = self.data.iloc[k]['value']
-		x,y = moisture.shape
+		vd = self.data.iloc[k]['vd']
+		windx = self.data.iloc[k]['windx']
+		windy = self.data.iloc[k]['windy']
+		firestart = self.data.iloc[k]['firestart']
 		
 		c = 0
 		
 		for i in range(m):
-			auto = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-			c += matdiff(auto.final_state(), value)
+			auto = Automaton(self.coef, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			c += matdiff(auto.final_state(), value)			
 		
 		return c/m
 
@@ -180,34 +197,65 @@ class machine:
 	
 	def gradient(self, k, m):
 		
+# 		Fetching all the necessary data
+		value = self.data.iloc[k]['value']		
 		moisture = self.data.iloc[k]['moisture']
-		value = self.data.iloc[k]['value']
+		vd = self.data.iloc[k]['vd']
+		windx = self.data.iloc[k]['windx']
+		windy = self.data.iloc[k]['windy']
+		firestart = self.data.iloc[k]['firestart']
 		
-		x,y = moisture.shape
-		
+# 		Initializing the values that will store the gradient
 		g_i = 0
 		g_m = 0
+		g_vd = 0
+		g_w = 0
+		
+# 		Building the Coef objects
+		coef_i = self.coef.copy_coef()
+		coef_i.intercept += self.h
+		
+		coef_m = self.coef.copy_coef()
+		coef_m.moisture += self.h
+		
+		coef_vd = self.coef.copy_coef()
+		coef_vd.vd += self.h
+		
+		coef_w = self.coef.copy_coef()
+		coef_w.wind += self.h
 		
 		for i in range(m):
 
 #			On calcule d'abord la prédiction sur le paramètre actuel			
-			auto_0 = Automaton(self.c_intercept, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			auto_0 = Automaton(self.coef, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
 			c_0 = matdiff(auto_0.final_state(), value)
 			
 #			Puis avec chacun des paramètres augmenté de self.h
 #			On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
 	
 #			c_intercept + h d'abord
-			auto_i = Automaton(self.c_intercept + self.h, self.c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			auto_i = Automaton(coef_i, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
 			c_i = matdiff(auto_i.final_state(), value)
 			g_i += (c_i - c_0)/self.h
 				
 #			c_moisture + h ensuite
-			auto_m = Automaton(self.c_intercept, self.c_moisture + self.h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+			auto_m = Automaton(coef_m, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
 			c_m = matdiff(auto_m.final_state(), value)
 			g_m += (c_m - c_0)/self.h
+			
+			auto_vd = Automaton(coef_vd, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			c_vd = matdiff(auto_vd.final_state(), value)
+			g_vd += (c_vd - c_0)/self.h
+
+			auto_wx = Automaton(coef_w, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			c_wx = matdiff(auto_wx.final_state(), value)
+			g_w += (c_wx - c_0) / (2 * self.h)
+			
+			auto_wy = Automaton(coef_w, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			c_wy = matdiff(auto_wy.final_state(), value)
+			g_w += (c_wy - c_0) / (2 * self.h)	
 		
-		return g_i / m, g_m / m
+		return g_i / m, g_m / m, g_vd / m, g_w / m
 
 #	Performs a step of the gradient descent
 #	The gradient computed on each data point is averaged over m computations
@@ -231,20 +279,28 @@ class machine:
 		
 		grad_intercept = 0
 		grad_moisture = 0
+		grad_vd = 0
+		grad_wind = 0
 		
 		for k in ll:			
-			g_i, g_m = self.gradient(k, m)
+			g_i, g_m, g_vd, g_w = self.gradient(k, m)
 			
 			grad_intercept += g_i
 			grad_moisture += g_m
+			grad_vd += g_vd
+			grad_wind += g_w
 			
 # 		Then we use the gradient by normalizing it and adding it to the parameter
 			
 		grad_intercept = (grad_intercept/self.mb_size)*self.learning_rate
 		grad_moisture = (grad_moisture/self.mb_size)*self.learning_rate
+		grad_vd = (grad_vd/self.mb_size)*self.learning_rate
+		grad_wind = (grad_wind/self.mb_size)*self.learning_rate
 		
-		self.c_intercept -= grad_intercept
-		self.c_moisture -= grad_moisture
+		self.coef.intercept -= grad_intercept
+		self.coef.moisture -= grad_moisture
+		self.coef.vd -= grad_vd
+		self.coef.wind -= grad_wind
 
 	
 	def remote_learn_step(self, m):
@@ -281,18 +337,25 @@ class machine:
 		for k in range(n):
 			self.learn_step(m)
 	
-	def predict(self, moisture, firestart = (25,25)):
-		auto = Automaton(self.c_intercept, self.c_moisture, moisture.shape, firestart, moisture)
+	def predict(self, firestart, moisture, vd, windx, windy):
+		auto = Automaton(self.coef, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
 		return auto.final_state()
 
-print("\nBuilding database...\n")
-
-bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
-
-print("Data generated\n")
 
 
-daneel = machine(bigdata, mb_size = 30, c_intercept = 0.56, c_moisture = -6.30, h = 0.1, learning_rate = 0.0000003, remote = True, cluster = True)
+
+
+
+
+print("\nFetching database...\n")
+
+bigdata = create_dataframe("processing_result", 3)
+
+print("\nData fetched successfully")
+
+coef = Coef(0, 0, 0, 0)
+
+daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.0000003, remote = False, cluster = False)
 
 print("\n\nMachine built: \n")
 
@@ -325,30 +388,13 @@ for k in range(10):
 t1 = time()
 
 # for cost computation
-m1 = 20
+m1 = 1
 
 # for gradient computation
-m2 = 40
-
-
-c_i, c_m = daneel.c_intercept, daneel.c_moisture
-daneel.c_intercept, daneel.c_moisture =	1, -7
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-daneel.c_intercept, daneel.c_moisture = c_i, c_m
-
+m2 = 1
 
 print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+
 print("Initiating learning phase...\n")
 
 for k in range(100):
