@@ -8,7 +8,7 @@ from time import time
 import os
 import matplotlib.pyplot as plt
 
-# import ray
+import ray
 
 
 # We now will have to ponder the question of firestart
@@ -32,7 +32,7 @@ rd.seed(0)
 def create_dataframe(path, n = -1):
 	
 	k = 0
-	df = pd.DataFrame(columns = ['entry number', 'value', 'moisture', 'vd', 'windx', 'windy', 'firestart'])
+	df = pd.DataFrame(columns = ['entry number', 'value', 'moisture', 'vd', 'windx', 'windy', 'firestart', 'shape', 'neighborsMatrix'])
 	
 	for filename in os.scandir(path):
 		print("Loading " + filename.name)
@@ -53,7 +53,11 @@ def create_dataframe(path, n = -1):
 		# Get the argmax of burned area for firestart
 		firestart = np.unravel_index(value.argmax(), value.shape)
 		
-		df.loc[k] = [number, value, moisture, vd, 0, 0, firestart]
+		# Store the shape and neighborsMatrix
+		shape = value.shape
+		nM = neighbors_matrix(shape)
+		
+		df.loc[k] = [number, value, moisture, vd, 0, 0, firestart, shape, nM]
 		k += 1
 		
 		if k == n:
@@ -66,8 +70,6 @@ def create_dataframe(path, n = -1):
 # It is used to define the cost of an output of the model
 
 def matdiff(a,b):
-	print(a.shape)
-	print(b.shape)
 	return len(a[a != b])**2
 
 
@@ -75,52 +77,66 @@ def matdiff(a,b):
 # all the required arguments
 # This way we can easily make it remote
 
-def fgradient(moisture, value, c_intercept, c_moisture, h, m):
+def fgradient(coef, shape, nM, firestart, moisture, vd, windx, windy, value, h, m):		
 
-	x,y = moisture.shape
-	
 	g_i = 0
 	g_m = 0
+	g_vd = 0
+	g_w = 0
+		
+	coef_i = coef.copy_coef()
+	coef_i.intercept += h
 	
-	for k in range(m):
+	coef_m = coef.copy_coef()
+	coef_m.moisture += h
+	
+	coef_vd = coef.copy_coef()
+	coef_vd.vd += h
+	
+	coef_w = coef.copy_coef()
+	coef_w.wind += h
 		
-#		On calcule d'abord la prédiction sur le paramètre actuel			
-		auto_0 = Automaton(c_intercept, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
-		c_0 = matdiff(auto_0.final_state(), value)
-		
-#		Puis avec chacun des paramètres augmenté de self.h
-#		On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
+	for i in range(m):
 
-#		c_intercept + h d'abord
-		auto_i = Automaton(c_intercept + h, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		auto_0 = Automaton(coef, shape, nM, firestart, moisture, vd, windx, windy)
+		c_0 = matdiff(auto_0.final_state(), value)
+
+			
+		auto_i = Automaton(coef_i, shape, nM, firestart, moisture, vd, windx, windy)
 		c_i = matdiff(auto_i.final_state(), value)
 		g_i += (c_i - c_0)/h
-			
-#		c_moisture + h ensuite
-		auto_m = Automaton(c_intercept, c_moisture + h, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+				
+		auto_m = Automaton(coef_m, shape, nM, firestart, moisture, vd, windx, windy)
 		c_m = matdiff(auto_m.final_state(), value)
 		g_m += (c_m - c_0)/h
+			
+		auto_vd = Automaton(coef_vd, shape, nM, firestart, moisture, vd, windx, windy)
+		c_vd = matdiff(auto_vd.final_state(), value)
+		g_vd += (c_vd - c_0)/h
+
+		auto_w = Automaton(coef_w, shape, nM, firestart, moisture, vd, windx, windy)
+		c_w = matdiff(auto_w.final_state(), value)
+		g_w += (c_w - c_0)/h
 		
-	return g_i / m, g_m / m
+	return g_i / m, g_m / m, g_vd / m, g_w / m
 
 
-# remote_fgradient = ray.remote(fgradient)
+remote_fgradient = ray.remote(fgradient)
 
 
 # Same for the remote version of cost
-def fcost(moisture, value, c_intercept, c_moisture, m):
+def fcost(coef, shape, neighborsMatrix, firestart, moisture, vd, windx, windy, value, m):
 	
-	x,y = moisture.shape
 	c = 0
 	
 	for k in range(m):
-		auto = Automaton(c_intercept, c_moisture, shape = (x,y), firestart = (int(x/2), int(y/2)), moisture = moisture)
+		auto = Automaton(coef, shape, neighborsMatrix, firestart, moisture, vd, windx, windy)
 		c += matdiff(auto.final_state(), value)
 	
 	return c/m
 
 
-# remote_fcost = ray.remote(fcost)
+remote_fcost = ray.remote(fcost)
 
 
 
@@ -140,8 +156,7 @@ class machine:
 		self.h = h
 		self.learning_rate = learning_rate
 		self.remote = remote
-		self.shape = data.iloc[0]['value'].shape
-		self.neighborsMatrix = neighbors_matrix(self.shape)
+
 	
 	def __str__(self):
 		return str(self.coef)
@@ -157,11 +172,13 @@ class machine:
 		windx = self.data.iloc[k]['windx']
 		windy = self.data.iloc[k]['windy']
 		firestart = self.data.iloc[k]['firestart']
+		shape = self.data.iloc[k]['shape']
+		nM = self.data.iloc[k]['neighborsMatrix']
 		
 		c = 0
 		
 		for i in range(m):
-			auto = Automaton(self.coef, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			auto = Automaton(self.coef, shape, nM, firestart, moisture, vd, windx, windy)
 			c += matdiff(auto.final_state(), value)			
 		
 		return c/m
@@ -187,7 +204,7 @@ class machine:
 	
 	def remote_fullcost(self, m):
 		n = len(self.data)
-		futures = [remote_fcost.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, m) for k in range(n)]
+		futures = [remote_fcost.remote(self.coef, self.data.iloc[k]['shape'], self.data.iloc[k]['neighborsMatrix'], self.data.iloc[k]['firestart'], self.data.iloc[k]['moisture'], self.data.iloc[k]['vd'], self.data.iloc[k]['windx'], self.data.iloc[k]['windy'], self.data.iloc[k]['value'], m) for k in range(n)]
 		cost_list = ray.get(futures)
 		return np.average(cost_list)
 
@@ -204,6 +221,8 @@ class machine:
 		windx = self.data.iloc[k]['windx']
 		windy = self.data.iloc[k]['windy']
 		firestart = self.data.iloc[k]['firestart']
+		shape = self.data.iloc[k]['shape']
+		nM = self.data.iloc[k]['neighborsMatrix']
 		
 # 		Initializing the values that will store the gradient
 		g_i = 0
@@ -227,33 +246,29 @@ class machine:
 		for i in range(m):
 
 #			On calcule d'abord la prédiction sur le paramètre actuel			
-			auto_0 = Automaton(self.coef, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			auto_0 = Automaton(self.coef, shape, nM, firestart, moisture, vd, windx, windy)
 			c_0 = matdiff(auto_0.final_state(), value)
 			
 #			Puis avec chacun des paramètres augmenté de self.h
 #			On peut ensuite calculer la dérivée partielle par rapport à chaque paramètre et actualiser le gradient
 	
 #			c_intercept + h d'abord
-			auto_i = Automaton(coef_i, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			auto_i = Automaton(coef_i, shape, nM, firestart, moisture, vd, windx, windy)
 			c_i = matdiff(auto_i.final_state(), value)
 			g_i += (c_i - c_0)/self.h
 				
 #			c_moisture + h ensuite
-			auto_m = Automaton(coef_m, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			auto_m = Automaton(coef_m, shape, nM, firestart, moisture, vd, windx, windy)
 			c_m = matdiff(auto_m.final_state(), value)
 			g_m += (c_m - c_0)/self.h
 			
-			auto_vd = Automaton(coef_vd, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
+			auto_vd = Automaton(coef_vd, shape, nM, firestart, moisture, vd, windx, windy)
 			c_vd = matdiff(auto_vd.final_state(), value)
 			g_vd += (c_vd - c_0)/self.h
 
-			auto_wx = Automaton(coef_w, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
-			c_wx = matdiff(auto_wx.final_state(), value)
-			g_w += (c_wx - c_0) / (2 * self.h)
-			
-			auto_wy = Automaton(coef_w, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
-			c_wy = matdiff(auto_wy.final_state(), value)
-			g_w += (c_wy - c_0) / (2 * self.h)	
+			auto_w = Automaton(coef_w, shape, nM, firestart, moisture, vd, windx, windy)
+			c_w = matdiff(auto_w.final_state(), value)
+			g_w += (c_w - c_0)/self.h
 		
 		return g_i / m, g_m / m, g_vd / m, g_w / m
 
@@ -314,23 +329,31 @@ class machine:
 		
 		grad_intercept = 0
 		grad_moisture = 0
+		grad_vd = 0
+		grad_wind = 0
 		
 # 		Instead of computing gradient on a data point and incrementing the gradients directly,
 # 		we ask for a remote computation of all the gradients and we increment once the
 # 		computation is over
 		
-		futures = [remote_fgradient.remote(self.data.iloc[k]['moisture'], self.data.iloc[k]['value'], self.c_intercept, self.c_moisture, self.h, m) for k in ll]
+		futures = [remote_fgradient.remote(self.coef, self.data.iloc[k]['shape'], self.data.iloc[k]['neighborsMatrix'], self.data.iloc[k]['firestart'], self.data.iloc[k]['moisture'], self.data.iloc[k]['vd'], self.data.iloc[k]['windx'], self.data.iloc[k]['windy'], self.data.iloc[k]['value'], self.h, m) for k in ll]
 		grad_list = ray.get(futures)
 		
-		for g_i, g_m in grad_list:
+		for g_i, g_m, g_vd, g_w in grad_list:
 			grad_intercept += g_i
-			grad_moisture += g_m		
+			grad_moisture += g_m
+			grad_vd += g_vd
+			grad_wind += g_w		
 		
 		grad_intercept = (grad_intercept/self.mb_size)*self.learning_rate
 		grad_moisture = (grad_moisture/self.mb_size)*self.learning_rate
+		grad_vd = (grad_vd/self.mb_size)*self.learning_rate
+		grad_wind = (grad_wind/self.mb_size)*self.learning_rate
 		
-		self.c_intercept -= grad_intercept
-		self.c_moisture -= grad_moisture
+		self.coef.intercept -= grad_intercept
+		self.coef.moisture -= grad_moisture
+		self.coef.vd -= grad_vd
+		self.coef.wind -= grad_wind
 		
 	
 	def learning(self, n, m):
@@ -355,7 +378,7 @@ print("\nData fetched successfully")
 
 coef = Coef(0, 0, 0, 0)
 
-daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.0000003, remote = False, cluster = False)
+daneel = machine(bigdata, 2, coef, h = 0.1, learning_rate = 0.0000003, remote = False, cluster = False)
 
 print("\n\nMachine built: \n")
 
