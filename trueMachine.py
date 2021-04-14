@@ -372,13 +372,13 @@ class machine:
 
 print("\nFetching database...\n")
 
-bigdata = create_dataframe("processing_result", 3)
+bigdata = create_dataframe("processing_result", 50)
 
 print("\nData fetched successfully")
 
 coef = Coef(0, 0, 0, 0)
 
-daneel = machine(bigdata, 2, coef, h = 0.1, learning_rate = 0.0000003, remote = False, cluster = False)
+daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -411,10 +411,10 @@ for k in range(10):
 t1 = time()
 
 # for cost computation
-m1 = 1
+m1 = 4
 
 # for gradient computation
-m2 = 1
+m2 = 2
 
 print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 
