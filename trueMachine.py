@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 import ray
 
-
 # We now will have to ponder the question of firestart
 
 # To start, we take for firestart the point with the highest value in the burned area array
@@ -35,33 +34,60 @@ def create_dataframe(path, n = -1):
 	df = pd.DataFrame(columns = ['entry number', 'value', 'moisture', 'vd', 'windx', 'windy', 'firestart', 'shape', 'neighborsMatrix'])
 	
 	for filename in os.scandir(path):
-		print("Loading " + filename.name)
-		
-		number = [int(i) for i in filename.name.split("_") if i.isdigit()][0]
-		
-		for entry in os.scandir(filename.path):
+				
+		if filename.name[0:9] == 'Australia':
+	
+			print("Loading " + filename.name)
 			
-			prefix = path + '/' + filename.name + '/'
+			number = [int(i) for i in filename.name.split("_") if i.isdigit()][0]
 			
-			if entry.name == 'vegetation_dansity.csv':
-				vd = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-			elif entry.name == 'burned_area.csv':
-				value = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-			elif entry.name == 'humidity.csv':
-				moisture = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+			for entry in os.scandir(filename.path):
+				
+				prefix = path + '/' + filename.name + '/'
+				
+				if entry.name == 'vegetation_density.csv':
+					vd = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+				elif entry.name == 'burned_area.csv':
+					value = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+				elif entry.name == 'humidity.csv':
+					moisture = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+			
+			# Get the argmax of burned area for firestart
+			firestart = np.unravel_index(value.argmax(), value.shape)
+			
+			# Store the shape and neighborsMatrix
+			shape = value.shape
+			nM = neighbors_matrix(shape)
+			
+			df.loc[k] = [number, value, moisture, vd, 0, 0, firestart, shape, nM]
+			k += 1
+			
+			if k == n:
+				break
+	
+# 	Fetching the winds
+
+	print("\nLoading winds")
+
+	windfile = open(path + "/processed_wind.txt")
+	winddata = windfile.read()
+	entries = winddata.split("\n")
+	
+	entries = [s.split() for s in entries]
+	
+	for i in range(len(df.index)):
 		
-		# Get the argmax of burned area for firestart
-		firestart = np.unravel_index(value.argmax(), value.shape)
+		for line in entries:
+						
+			if int(line[0]) == df.iloc[i]['entry number']:
+				
+				df.at[i, 'windx'] = float(line[1])
+				df.at[i, 'windy'] = float(line[2])
+				
+				break
 		
-		# Store the shape and neighborsMatrix
-		shape = value.shape
-		nM = neighbors_matrix(shape)
-		
-		df.loc[k] = [number, value, moisture, vd, 0, 0, firestart, shape, nM]
-		k += 1
-		
-		if k == n:
-			return df
+		if df.at[i, 'windx'] == 0:
+			print("Failed to fetch wind for entry {}".format(df.iloc[i]['entry number']))
 
 	return df
 
@@ -372,7 +398,7 @@ class machine:
 
 print("\nFetching database...\n")
 
-bigdata = create_dataframe("processing_result", 50)
+bigdata = create_dataframe("processing_result", 5)
 
 print("\nData fetched successfully")
 
