@@ -48,7 +48,7 @@ def create_dataframe(path, n = -1):
 				if entry.name == 'vegetation_density.csv':
 					vd = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 				elif entry.name == 'burned_area.csv':
-					value = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+					burned_area = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 				elif entry.name == 'humidity.csv':
 					moisture = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 			
@@ -225,6 +225,7 @@ class machine:
 		n = len(self.data)
 		for k in range(n):
 			c += self.cost(k, m)
+			print(self.cost(k,m))
 		return c/n
 	
 	
@@ -404,7 +405,7 @@ print("\nData fetched successfully")
 
 coef = Coef(0, 0, 0, 0)
 
-daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = True)
+daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = False)
 
 print("\n\nMachine built: \n")
 
@@ -444,20 +445,22 @@ def flin(x, xn):
 	l = []	
 	
 	for i in range(xn):
-		daneel.coef.wind = x[i]
-		l.append(daneel.fullcost(m1))
+		daneel.coef.wind = 0
+		c = daneel.fullcost(1)
+		print(c)
+		l.append(c)
 	
 	return l
 
 
 
-xn = 3
-x = np.linspace(0, 1, xn)
+xn = 10
+x = np.linspace(0, 10, xn)
 
 l = flin(x, xn)
 
 plt.plot(x, l)
-
+plt.show()
 
 """
 
@@ -481,4 +484,4 @@ print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
 if ray.is_initialized():
 	ray.shutdown()
 
-print("Computation over\n")
+print("\n\nComputation over\n")
