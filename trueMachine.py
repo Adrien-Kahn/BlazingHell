@@ -412,35 +412,54 @@ print("Initial parameters:\n")
 print(daneel)
 
 
-
-"""
-# With m = 10 we get a full cost with precision around 1%
-a = 20
-
-t0 = time()
-
-for k in range(6):
-	print("Initial cost averaged {} times:\t{}".format(a, daneel.fullcost(a)))
-
-print("\nCost computation time: {:.2f}s\n\n".format(time() - t0))
-
-print("\n")
-
-# At b = 30, we start having reasonably small variation (around 20% at most)
-b = 30
-for k in range(10):
-	x,y = daneel.gradient(0,b)
-	print("Gradient at point 0 averaged {} times:\t{}\t{}".format(b, x, y))
-
-"""
-
 t1 = time()
 
 # for cost computation
-m1 = 4
+m1 = 1
 
 # for gradient computation
-m2 = 2
+m2 = 1
+
+def fmat():
+
+	xn = 3
+	yn = 3
+	
+	x = np.linspace(0, 1, xn)
+	y = np.linspace(0, 1, yn)
+	
+	mat = np.zeros((xn,yn))
+	
+	for i in range(xn):
+		for j in range(yn):
+			daneel.coef.moisture = x[i]
+			daneel.coef.wind = y[j]
+			mat[i,j] = daneel.fullcost(m1)
+	
+	return mat
+
+
+def flin(x, xn):
+	
+	l = []	
+	
+	for i in range(xn):
+		daneel.coef.wind = x[i]
+		l.append(daneel.fullcost(m1))
+	
+	return l
+
+
+
+xn = 3
+x = np.linspace(0, 1, xn)
+
+l = flin(x, xn)
+
+plt.plot(x, l)
+
+
+"""
 
 print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 
@@ -453,9 +472,13 @@ for k in range(100):
 	print(daneel)
 	print("\n")
 
+print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
+
+"""
+
+
+
 if ray.is_initialized():
 	ray.shutdown()
 
 print("Computation over\n")
-print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
-
