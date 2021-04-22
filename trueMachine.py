@@ -49,6 +49,9 @@ def create_dataframe(path, n = -1):
 					vd = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 				elif entry.name == 'burned_area.csv':
 					burned_area = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+					value = np.zeros(burned_area.shape)
+					value[burned_area > 0.5] = 3
+					value[burned_area <= 0.5] = 1
 				elif entry.name == 'humidity.csv':
 					moisture = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
 			
@@ -399,19 +402,19 @@ class machine:
 
 print("\nFetching database...\n")
 
-bigdata = create_dataframe("processing_result", 5)
+bigdata = create_dataframe("processing_result", 10)
 
 print("\nData fetched successfully")
 
 coef = Coef(0, 0, 0, 0)
 
-daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = False)
+daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
 print("Initial parameters:\n")
 print(daneel)
-
+print()
 
 t1 = time()
 
@@ -445,10 +448,10 @@ def flin(x, xn):
 	l = []	
 	
 	for i in range(xn):
-		daneel.coef.wind = 0
+		daneel.coef.wind = x[i]
 		c = daneel.fullcost(1)
-		print(c)
-		l.append(c)
+		print(np.log(c))
+		l.append(np.log(c))
 	
 	return l
 
