@@ -7,6 +7,7 @@ import random as rd
 from time import time
 import os
 import matplotlib.pyplot as plt
+from scipy.interpolate import RegularGridInterpolator
 
 import ray
 
@@ -24,12 +25,25 @@ np.random.seed(npseed)
 # This seed controls which data indices are chosen in minibatches
 rd.seed(0)
 
+def regrid(data, out_x, out_y):
+    m = max(data.shape[0], data.shape[1])
+    y = np.linspace(0, 1.0/m, data.shape[0])
+    x = np.linspace(0, 1.0/m, data.shape[1])
+    interpolating_function = RegularGridInterpolator((y, x), data)
+
+    yv, xv = np.meshgrid(np.linspace(0, 1.0/m, out_y), np.linspace(0, 1.0/m, out_x))
+
+    return interpolating_function((xv, yv))
+
+
 
 # Builds a dataframe by fetching data from the folder indicated in path
 # path: relative path to the folder containing all fire instances
-#  n: optionnal parameter to limit the number of entries fetched
-def create_dataframe(path, n = -1):
+# compression_factor: the factor by which to compress the dimensions of the arrays
+# n: optional parameter to limit the number of entries fetched
+def create_dataframe(path, compression_factor, n = -1):
 	
+	cf = compression_factor
 	k = 0
 	df = pd.DataFrame(columns = ['entry number', 'value', 'moisture', 'vd', 'windx', 'windy', 'firestart', 'shape', 'neighborsMatrix'])
 	
@@ -46,14 +60,22 @@ def create_dataframe(path, n = -1):
 				prefix = path + '/' + filename.name + '/'
 				
 				if entry.name == 'vegetation_density.csv':
-					vd = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+					vegetation_density = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+					x,y = vegetation_density.shape
+					vd = regrid(vegetation_density, x//cf, y//cf)
+					
 				elif entry.name == 'burned_area.csv':
 					burned_area = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-					value = np.zeros(burned_area.shape)
-					value[burned_area > 0.5] = 3
-					value[burned_area <= 0.5] = 1
+					x,y = burned_area.shape
+					ba = regrid(burned_area, x//cf, y//cf)
+					value = np.zeros(ba.shape)
+					value[ba > 0.5] = 3
+					value[ba <= 0.5] = 1
+					
 				elif entry.name == 'humidity.csv':
-					moisture = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+					humidity = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
+					x,y = humidity.shape
+					moisture = regrid(humidity, x//cf, y//cf)
 			
 			# Get the argmax of burned area for firestart
 			firestart = np.unravel_index(value.argmax(), value.shape)

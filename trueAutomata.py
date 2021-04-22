@@ -172,7 +172,7 @@ class Automaton:
 # 				A cell is burning below (higher i) the current cell
 				if b:
 					if 1 in l:
-						p = sigmoid(s + self.coef.wind * c.windx)
+						p = sigmoid(s + self.coef.wind * c.windy)
 						if np.random.random() < p:
 							
 # 							Changing the state to burning
@@ -191,7 +191,7 @@ class Automaton:
 # 				A cell is burning above (lower i) the current cell
 				if b:
 					if 2 in l:
-						p = sigmoid(s - self.coef.wind * c.windx)
+						p = sigmoid(s - self.coef.wind * c.windy)
 						if np.random.random() < p:
 							c.state = 2
 							self.fire_nb += 1
@@ -206,7 +206,7 @@ class Automaton:
 # 				A cell is burning to the right (higher j) of the current cell
 				if b:
 					if 3 in l:
-						p = sigmoid(s - self.coef.wind * c.windy)
+						p = sigmoid(s - self.coef.wind * c.windx)
 						if np.random.random() < p:
 							c.state = 2
 							self.fire_nb += 1
@@ -221,7 +221,7 @@ class Automaton:
 # 				A cell is burning to the left (lower j) of the current cell
 				if b:
 					if 4 in l:
-						p = sigmoid(s + self.coef.wind * c.windy)
+						p = sigmoid(s + self.coef.wind * c.windx)
 						if np.random.random() < p:
 							c.state = 2
 							self.fire_nb += 1
@@ -286,12 +286,12 @@ class Automaton:
 
 if __name__ == "__main__":
 		
-	n = 100
-	nshape = (498,401)
+	n = 50
+	nshape = (n,n)
 	fs = (int(n/2), int(n/2))
 	
 	nM = neighbors_matrix((n,n))
-	coef = Coef(0, -7, 4, -5)
+	coef = Coef(-3, 0, 0, 1)
 	
 	x = np.linspace(-1,1,n)
 	X,Y = np.meshgrid(x,x)
@@ -302,8 +302,8 @@ if __name__ == "__main__":
 	moisture = np.full(nshape, 0)
 	vd = np.full(nshape, 0)
 	
-	windx = 0
-	windy = 1
+	windx = -3
+	windy = -2
 	
 	auto = Automaton(coef, nshape, nM, fs, moisture, vd, windx, windy)
 	
