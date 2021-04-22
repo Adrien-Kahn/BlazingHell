@@ -250,7 +250,6 @@ class machine:
 		n = len(self.data)
 		for k in range(n):
 			c += self.cost(k, m)
-			print(self.cost(k,m))
 		return c/n
 	
 	
@@ -424,7 +423,7 @@ class machine:
 
 print("\nFetching database...\n")
 
-bigdata = create_dataframe("processing_result", 10)
+bigdata = create_dataframe("processing_result", 5)
 
 print("\nData fetched successfully")
 
@@ -471,7 +470,7 @@ def flin(x, xn):
 	
 	for i in range(xn):
 		daneel.coef.wind = x[i]
-		c = daneel.fullcost(1)
+		c = daneel.fullcost(10)
 		print(np.log(c))
 		l.append(np.log(c))
 	
@@ -480,7 +479,7 @@ def flin(x, xn):
 
 
 xn = 10
-x = np.linspace(0, 10, xn)
+x = np.linspace(0, 5, xn)
 
 l = flin(x, xn)
 
