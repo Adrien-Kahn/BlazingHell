@@ -429,7 +429,11 @@ print("\nData fetched successfully")
 
 coef = Coef(0, 0, 0, 0)
 
-daneel = machine(bigdata, 30, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = True)
+# i 25
+# m 0 ?
+# w 16
+
+daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -440,28 +444,42 @@ print()
 t1 = time()
 
 # for cost computation
-m1 = 1
+m1 = 5
 
 # for gradient computation
 m2 = 1
 
+
 def fmat():
 
-	xn = 3
-	yn = 3
+	xn = 10
+	yn = 10
 	
-	x = np.linspace(0, 1, xn)
-	y = np.linspace(0, 1, yn)
+	x = np.linspace(-8, 0, xn)
+	y = np.linspace(5, 15, yn)
 	
-	mat = np.zeros((xn,yn))
-	
+	lx = []	
+	ly = []
+	lc = []
+
 	for i in range(xn):
 		for j in range(yn):
-			daneel.coef.moisture = x[i]
-			daneel.coef.wind = y[j]
-			mat[i,j] = daneel.fullcost(m1)
+			print(i,j)
+			daneel.coef.intercept = x[i]
+			daneel.coef.vd = y[j]
+			lx.append(x[i])
+			ly.append(y[j])
+			lc.append(np.log(daneel.fullcost(m1)))
 	
-	return mat
+	plt.scatter(lx, ly, s = 1000, c = lc, cmap = 'viridis')
+	plt.colorbar()
+	plt.xlabel("c_intercept")
+	plt.ylabel("c_moisture")
+	plt.legend()
+	plt.show()
+	print(lx)
+	print(ly)
+	print(lc)
 
 
 def flin(x, xn):
@@ -469,22 +487,23 @@ def flin(x, xn):
 	l = []	
 	
 	for i in range(xn):
-		daneel.coef.wind = x[i]
-		c = daneel.fullcost(10)
-		print(np.log(c))
+		daneel.coef.intercept = x[i]
+		c = daneel.fullcost(m1)
 		l.append(np.log(c))
 	
 	return l
 
 
 
-xn = 10
-x = np.linspace(0, 5, xn)
+#xn = 100
+#x = np.linspace(-30, 150, xn)
 
-l = flin(x, xn)
+#l = flin(x, xn)
 
-plt.plot(x, l)
-plt.show()
+#plt.plot(x, l)
+#plt.show()
+
+fmat()
 
 """
 

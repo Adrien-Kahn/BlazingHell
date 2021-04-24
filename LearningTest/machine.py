@@ -265,14 +265,23 @@ class machine:
 		auto = Automaton(self.c_intercept, self.c_moisture, moisture.shape, firestart, moisture)
 		return auto.final_state()
 
+
+
+# Will contain the values of c_intercept, c_moisture and log(fullcost) respectively at each time step
+
+li = []
+lm = []
+lc = []
+
+
 print("\nBuilding database...\n")
 
-bigdata = data(100, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
+bigdata = data(300, 1, -7, shape = (50,50), firestart = (25,25), revert_seed = npseed)
 
 print("Data generated\n")
 
 
-daneel = machine(bigdata, mb_size = 30, c_intercept = 0.56, c_moisture = -6.30, h = 0.1, learning_rate = 0.0000003, remote = True, cluster = True)
+daneel = machine(bigdata, mb_size = 100, c_intercept = -0.15, c_moisture = -5.2, h = 0.1, learning_rate = 0.0000007, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -305,37 +314,47 @@ for k in range(10):
 t1 = time()
 
 # for cost computation
-m1 = 20
+m1 = 30
 
 # for gradient computation
-m2 = 40
+m2 = 50
 
 
 c_i, c_m = daneel.c_intercept, daneel.c_moisture
 daneel.c_intercept, daneel.c_moisture =	1, -7
 print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nTarget log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 daneel.c_intercept, daneel.c_moisture = c_i, c_m
 
 
 print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 print("Initiating learning phase...\n")
 
-for k in range(100):
+for k in range(10000):
+
+	tk = time()
 	daneel.learn_step(m2)
-	print("Log cost at step {}:\t{:.2f}\n".format(k, np.log(daneel.fullcost(m1))))
+	print("Learning step time: {:.2f}s\n".format(time() - tk))
+	
+	tk = time()
+	logc = np.log(daneel.fullcost(m1))
+	print("Cost computation time: {:.2f}s\n".format(time() - tk))
+	
+	li.append(daneel.c_intercept)
+	lm.append(daneel.c_moisture)
+	lc.append(logc)
+
+	print("Log cost at step {}:\t{:.2f}\n".format(k, logc))
 	print("Parameters at step {}:".format(k))
 	print(daneel)
+
+	if k%5 == 0:	
+		print("List of c_intercept:")
+		print(li)
+		print("List of c_moisture:")
+		print(lm)
+		print("List of log cost:")
+		print(lc)
+
 	print("\n")
 
 if ray.is_initialized():
