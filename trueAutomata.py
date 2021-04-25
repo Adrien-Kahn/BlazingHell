@@ -79,7 +79,7 @@ class Coef:
 		self.vd = c_vd
 		self.wind = c_wind
 	def __str__(self):
-		return "c_intercept = {:.2f} \nc_moisture = {:.2f} \nc_vd = {:.2f} \nc_wind = {:.2f}".format(self.intercept, self.moisture, self.vd, self.wind)
+		return "c_intercept =\t{:.2f} \nc_moisture =\t{:.2f} \nc_vd =\t\t{:.2f} \nc_wind =\t{:.2f}".format(self.intercept, self.moisture, self.vd, self.wind)
 # 	Returns a Coef objects that is a copy of self
 	def copy_coef(self):
 		coef = Coef(self.intercept, self.moisture, self.vd, self.wind)

@@ -429,11 +429,12 @@ print("\nData fetched successfully")
 
 coef = Coef(0, 0, 0, 0)
 
-# i 25
-# m 0 ?
-# w 16
+# i 18
+# m -6
+# v 2
+# w 12
 
-daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.0000007, remote = True, cluster = True)
+daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.0000001, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -444,20 +445,20 @@ print()
 t1 = time()
 
 # for cost computation
-m1 = 5
+m1 = 3
 
 # for gradient computation
-m2 = 1
+m2 = 20
 
 
 # Plots the projection of the cost in the plane of two of the four coordinates
 def fmat():
 
-	xn = 10
-	yn = 10
+	xn = 30
+	yn = 30
 	
-	x = np.linspace(-8, 0, xn)
-	y = np.linspace(5, 15, yn)
+	x = np.linspace(-10, 100, xn)
+	y = np.linspace(-10, 100, yn)
 	
 	lx = []	
 	ly = []
@@ -467,15 +468,15 @@ def fmat():
 		for j in range(yn):
 			print(i,j)
 			daneel.coef.intercept = x[i]
-			daneel.coef.vd = y[j]
+			daneel.coef.wind = y[j]
 			lx.append(x[i])
 			ly.append(y[j])
 			lc.append(np.log(daneel.fullcost(m1)))
 	
-	plt.scatter(lx, ly, s = 1000, c = lc, cmap = 'viridis')
+	plt.scatter(lx, ly, s = 500, c = lc, cmap = 'viridis')
 	plt.colorbar()
 	plt.xlabel("c_intercept")
-	plt.ylabel("c_moisture")
+	plt.ylabel("c_wind")
 	plt.legend()
 	plt.show()
 	print(lx)
@@ -547,9 +548,9 @@ def learningTest():
 		
 	print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
 	
-	
-	
+fmat()
 
+#learningTest()
 
 
 if ray.is_initialized():
