@@ -356,10 +356,12 @@ for k in range(10000):
 		print(lc)
 
 	print("\n")
+	
+print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
+
 
 if ray.is_initialized():
 	ray.shutdown()
 
 print("Computation over\n")
-print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
 

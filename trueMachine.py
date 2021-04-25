@@ -420,9 +420,9 @@ class machine:
 
 
 
-
 print("\nFetching database...\n")
 
+# Gets all data entries and compresses their size by a factor of 5
 bigdata = create_dataframe("processing_result", 5)
 
 print("\nData fetched successfully")
@@ -433,7 +433,7 @@ coef = Coef(0, 0, 0, 0)
 # m 0 ?
 # w 16
 
-daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.00003, remote = True, cluster = True)
+daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.0000007, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -450,6 +450,7 @@ m1 = 5
 m2 = 1
 
 
+# Plots the projection of the cost in the plane of two of the four coordinates
 def fmat():
 
 	xn = 10
@@ -482,45 +483,72 @@ def fmat():
 	print(lc)
 
 
+# Plots the projection of the cost along the axis of one coordinate
 def flin(x, xn):
 	
-	l = []	
+	xn = 10
+	x = np.linspace(-5, 5, xn)
+	l = []
 	
 	for i in range(xn):
 		daneel.coef.intercept = x[i]
 		c = daneel.fullcost(m1)
 		l.append(np.log(c))
 	
-	return l
+	plt.plot(x, l)
 
 
 
-#xn = 100
-#x = np.linspace(-30, 150, xn)
-
-#l = flin(x, xn)
-
-#plt.plot(x, l)
-#plt.show()
-
-fmat()
-
-"""
-
-print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
-
-print("Initiating learning phase...\n")
-
-for k in range(100):
-	daneel.learn_step(m2)
-	print("Log cost at step {}:\t{:.2f}\n".format(k, np.log(daneel.fullcost(m1))))
-	print("Parameters at step {}:".format(k))
-	print(daneel)
-	print("\n")
-
-print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
-
-"""
+# Does learning steps and prints the evolution of the parameters and of the cost
+def learningTest():
+	
+	li = []
+	lm = []
+	lv = []
+	lw = []
+	lc = []
+	
+	print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
+	print("Initiating learning phase...\n")
+	
+	for k in range(10000):
+	
+		tk = time()
+		daneel.learn_step(m2)
+		print("Learning step time:\t{:.2f}s".format(time() - tk))
+		
+		tk = time()
+		logc = np.log(daneel.fullcost(m1))
+		print("Cost computation time:\t{:.2f}s\n".format(time() - tk))
+		
+		li.append(daneel.coef.intercept)
+		lm.append(daneel.coef.moisture)
+		lv.append(daneel.coef.vd)
+		lw.append(daneel.coef.wind)
+		lc.append(logc)
+		
+		print("Log cost at step {}:\t{:.2f}\n".format(k, logc))
+		print("Parameters at step {}:".format(k))
+		print(daneel)
+	
+		if k%5 == 0:	
+			print("List of c_intercept:")
+			print(li)
+			print("List of c_moisture:")
+			print(lm)
+			print("List of c_vd:")
+			print(lv)
+			print("List of c_wind:")
+			print(lw)
+			print("List of log cost:")
+			print(lc)
+	
+		print("\n")
+		
+	print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
+	
+	
+	
 
 
 
