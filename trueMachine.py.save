@@ -427,9 +427,14 @@ bigdata = create_dataframe("processing_result", 5)
 
 print("\nData fetched successfully")
 
-coef = Coef(-20.5, -0.2, 40, 0.7)
+coef = Coef(0, 0, 0, 0)
 
-daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.000001, remote = True, cluster = True)
+# i 25
+# m 0 ?
+# v 20
+# w 16
+
+daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.0000007, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
@@ -440,10 +445,10 @@ print()
 t1 = time()
 
 # for cost computation
-m1 = 20
+m1 = 5
 
 # for gradient computation
-m2 = 30
+m2 = 1
 
 
 # Plots the projection of the cost in the plane of two of the four coordinates
@@ -452,26 +457,26 @@ def fmat():
 	xn = 10
 	yn = 10
 	
-	x = np.linspace(30, 50, xn)
-	y = np.linspace(-1, 5, yn)
+	x = np.linspace(-14, -8, xn)
+	y = np.linspace(15, 25, yn)
 	
-	lx = []
+	lx = []	
 	ly = []
 	lc = []
 
 	for i in range(xn):
 		for j in range(yn):
 			print(i,j)
-			daneel.coef.vd = x[i]
-			daneel.coef.wind = y[j]
+			daneel.coef.intercept = x[i]
+			daneel.coef.vd = y[j]
 			lx.append(x[i])
 			ly.append(y[j])
 			lc.append(np.log(daneel.fullcost(m1)))
 	
 	plt.scatter(lx, ly, s = 1000, c = lc, cmap = 'viridis')
 	plt.colorbar()
-	plt.xlabel("c_vd")
-	plt.ylabel("c_wind")
+	plt.xlabel("c_intercept")
+	plt.ylabel("c_vd")
 	plt.legend()
 	plt.show()
 	print(lx)
@@ -480,36 +485,31 @@ def fmat():
 
 
 # Plots the projection of the cost along the axis of one coordinate
-def flin():
+def flin(x, xn):
 	
-	xn = 100
-	x = np.linspace(-50, 50, xn)
+	xn = 10
+	x = np.linspace(-5, 5, xn)
 	l = []
 	
 	for i in range(xn):
-		daneel.coef.wind = x[i]
+		daneel.coef.intercept = x[i]
 		c = daneel.fullcost(m1)
 		l.append(np.log(c))
 	
 	plt.plot(x, l)
-	plt.xlabel("c_wind")
-	plt.ylabel("log cost")
-	plt.title(str(daneel))
-	plt.legend()
-	plt.show()
 
 
 
 # Does learning steps and prints the evolution of the parameters and of the cost
 def learningTest():
 	
-	li = [daneel.coef.intercept]
-	lm = [daneel.coef.moisture]
-	lv = [daneel.coef.vd]
-	lw = [daneel.coef.wind]
-	lc = [np.log(daneel.fullcost(m1))]
+	li = []
+	lm = []
+	lv = []
+	lw = []
+	lc = []
 	
-	print("\nInitial log cost:\t{:.2f}\n".format(lc[0]))
+	print("\nInitial log cost:\t{:.2f}\n".format(np.log(daneel.fullcost(m1))))
 	print("Initiating learning phase...\n")
 	
 	for k in range(10000):
@@ -547,13 +547,9 @@ def learningTest():
 		print("\n")
 		
 	print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
-
-
-
-#fmat()
-
-learningTest()
-
+	
+fmat()
+	
 
 
 
