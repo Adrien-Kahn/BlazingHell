@@ -78,7 +78,7 @@ def create_dataframe(path, compression_factor, n = -1):
 					moisture = regrid(humidity, x//cf, y//cf)
 			
 			# Get the argmax of burned area for firestart
-			firestart = np.unravel_index(value.argmax(), value.shape)
+			firestart = np.unravel_index(ba.argmax(), value.shape)
 			
 			# Store the shape and neighborsMatrix
 			shape = value.shape
@@ -429,7 +429,7 @@ print("\nData fetched successfully")
 
 coef = Coef(-20.5, -0.2, 40, 0.7)
 
-daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.000001, remote = True, cluster = True)
+daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.00001, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
