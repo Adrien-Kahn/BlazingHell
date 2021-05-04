@@ -2,14 +2,47 @@
 
 ### `DataCollectionAndProcessing`
 
-`DataCollectionAndProcessing' contains scripts related to the collection and processing of fire data.
-'firedata_automation' is the script used to extract and process fire data from Copernicus.
+`DataCollectionAndProcessing` contains scripts related to the collection and processing of fire data.
+`firedata_automation.py` is the script used to extract and process fire data from Copernicus.
 
-### 'DeterministicModel'
+### 'DeterministicModel`
 
-'DeterministicModel' contains the implementation of the model described in 5.4
+`DeterministicModel` contains the implementation of the model described in 5.4
 
-### 'LearningTest`
+### `LearningTest`
+
+`LearningTest` contains the implementation of the first model described from 5.1 to 5.3 and in 5.5.
+
+## `Automata.py`
+
+`Automata.py` implements the basic data structures needed to work with the inital model, namely `Cell` and `Automaton`.
+
+# The class `Cell`
+
+`Cell` is, as explained in the report, the description of a cell of the automata. It simply contains all the information in that cell :
+- `moisture` : the value of moisture for that cell
+- `fuel` : the remaining fuel in that cell
+- `state` : the current state of the cell
+
+The state of the cell is coded by a integer :
+- 1 : flammable
+- 2 : burning
+- 3 : burnt
+
+
+# The class Automaton
+
+`Automaton` is the class that implements the cellular automaton. Its fields are :
+
+- `mat` a matrix of `Cell` that represents the current state of the automaton
+- `c_intercept` the constant coefficient
+- `c_moisture` the coefficient associated to moisture
+
+
+- `ii` and `jj` the shape of the automaton's grid
+
+
+
 
 ### La Classe Cell
 
