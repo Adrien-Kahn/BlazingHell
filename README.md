@@ -1,15 +1,15 @@
-# What you will find in this repository
+What you will find in this repository :
 
-### `DataCollectionAndProcessing`
+# `DataCollectionAndProcessing`
 
 `DataCollectionAndProcessing` contains scripts related to the collection and processing of fire data.
 `firedata_automation.py` is the script used to extract and process fire data from Copernicus.
 
-### 'DeterministicModel`
+# `DeterministicModel`
 
 `DeterministicModel` contains the implementation of the model described in 5.4
 
-### `LearningTest`
+# `LearningTest`
 
 `LearningTest` contains the implementation of the first model described from 5.1 to 5.3 and in 5.5.
 
@@ -17,7 +17,7 @@
 
 `Automata.py` implements the basic data structures needed to work with the inital model, namely `Cell` and `Automaton`.
 
-# The class `Cell`
+### The class `Cell`
 
 `Cell` is, as explained in the report, the description of a cell of the automata. It simply contains all the information in that cell :
 - `moisture` : the value of moisture for that cell
@@ -30,7 +30,7 @@ The state of the cell is coded by a integer :
 - 3 : burnt
 
 
-# The class Automaton
+### The class Automaton
 
 `Automaton` is the class that implements the cellular automaton. Its fields are :
 
