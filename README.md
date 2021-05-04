@@ -1,4 +1,15 @@
-# Documentation rapide
+# What you will find in this repository
+
+### `DataCollectionAndProcessing`
+
+`DataCollectionAndProcessing' contains scripts related to the collection and processing of fire data.
+'firedata_automation' is the script used to extract and process fire data from Copernicus.
+
+### 'DeterministicModel'
+
+'DeterministicModel' contains the implementation of the model described in 5.4
+
+### 'LearningTest`
 
 ### La Classe Cell
 
