@@ -1,21 +1,21 @@
 What you will find in this repository :
 
-# `DataCollectionAndProcessing`
+# DataCollectionAndProcessing
 
 `DataCollectionAndProcessing` contains scripts related to the collection and processing of fire data.
 `firedata_automation.py` is the script used to extract and process fire data from Copernicus.
 
-# `DeterministicModel`
+# DeterministicModel
 
 `DeterministicModel` contains the implementation of the model described in 5.4
 
-# `LearningTest`
+# LearningTest
 
 `LearningTest` contains the implementation of the first model described from 5.1 to 5.3 and in 5.5.
 
-## `Automata.py`
+## Automata.py
 
-`Automata.py` implements the basic data structures needed to work with the inital model, namely `Cell` and `Automaton`.
+Automata.py implements the basic data structures needed to work with the inital model, namely `Cell` and `Automaton`.
 
 ### The class `Cell`
 
@@ -30,7 +30,7 @@ The state of the cell is coded by a integer :
 - 3 : burnt
 
 
-### The class Automaton
+### The class `Automaton`
 
 `Automaton` is the class that implements the cellular automaton. Its fields are :
 
@@ -40,6 +40,22 @@ The state of the cell is coded by a integer :
 
 
 - `ii` and `jj` the shape of the automaton's grid
+
+
+
+# newenv
+
+newenv is an environment that can be used to run the python code of LearningTest and TrueMachine.py. The only library it does not contain is the one that enable us to display graphics on a remote computer (I forgot its name) because it was too big for github.
+
+# processing_result
+
+It contains the processed fire data needed for learning. 
+The Australia_fire_xxx files contain 3 .csv files that provide information on the fire and a .png that gives a visual representation of the data.
+processed_wind.txt contains information on the wind values for each entry of Australia_fire_xxx.
+
+# config.yaml
+
+config.yaml is the configuration file needed to start the ray cluster with the command `ray up config.yaml`. To make it work on your onw account, make sure to change the paths and to provide a path to your connection key.
 
 
 
