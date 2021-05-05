@@ -3,7 +3,33 @@ What you will find in this repository :
 # DataCollectionAndProcessing
 
 `DataCollectionAndProcessing` contains scripts related to the collection and processing of fire data.
-`firedata_automation.py` is the script used to extract and process fire data from Copernicus.
+
+## firedata_automation.py
+
+firedata_automation.py implements the functions needed to extract and process fire data from Copernicus.
+
+### The class `Fire_spot` 
+
+`Fire_spot` class implements the part that download the image befor and after the fire. Its main fields are :
+- `lat`: the latitude of the burned spot
+- `lng`: the longitude of the burned spot 
+- `date`: the date of the fire
+- `radius` : the radius of the area from which we want to obtain its data
+- `deltatime` : the length of time in which we collect data for both period befor and after the fire event 
+
+The method `get_product` retrieves the image with the least cloud cover between the available
+products corresponding to the selected spot and period.
+
+
+### The class `Image_processing` 
+
+`Image_processing` implements the functions that caclculate vegetation density and other important indeces. Its constructor get an instannce of `Fire_spot`
+class. Its main method is :
+
+`calc_indices` :  it calculates all the indeces we need and store theme in the dictionary field `bands_bfr`or `bands_aftr `.
+
+The static method `run`in the bottom of that file run the whole algorithm on the FIRMS data.
+
 
 # DeterministicModel
 
@@ -62,61 +88,61 @@ config.yaml is the configuration file needed to start the ray cluster with the c
 
 ### La Classe Cell
 
-Implémentation des cellules de l'automate, contient plusieurs attributs qui indiquent l'état de la cellule :
+ImplÃ©mentation des cellules de l'automate, contient plusieurs attributs qui indiquent l'Ã©tat de la cellule :
 
-- `state` : 1 pour enflammable, 2 pour enflammée, 3 pour consommée
-- `moisture` : valeur de l'humidité
+- `state` : 1 pour enflammable, 2 pour enflammÃ©e, 3 pour consommÃ©e
+- `moisture` : valeur de l'humiditÃ©
 
-... et bien d'autre à venir (on se restreint pour le moment à ceux là)
+... et bien d'autre Ã  venir (on se restreint pour le moment Ã  ceux lÃ )
 
-La méthode `transition`, étant donné la liste des cellules voisines et le paramètre de l'automate, renvoie une nouvelle cellule qui représente la cellule à l'instant suivant
+La mÃ©thode `transition`, Ã©tant donnÃ© la liste des cellules voisines et le paramÃ¨tre de l'automate, renvoie une nouvelle cellule qui reprÃ©sente la cellule Ã  l'instant suivant
 
 ### La Classe Automaton
 
-Implémentation de l'automate.
+ImplÃ©mentation de l'automate.
 
 Le constructeur prend en argument : 
-- `beta` : le paramètre de l'automate (un vecteur numpy) [Pour le moment, il prend juste la forme de deux paramètres `c_intercept` et `c_moisture`]
-- `shape` : la dimension de l'espace à simuler
-- `firestart` : la coordonnée du point de départ du feu
-- `moisture` : la matrice qui contient la valeur de l'humidité en tout point de l'espace
+- `beta` : le paramÃ¨tre de l'automate (un vecteur numpy) [Pour le moment, il prend juste la forme de deux paramÃ¨tres `c_intercept` et `c_moisture`]
+- `shape` : la dimension de l'espace Ã  simuler
+- `firestart` : la coordonnÃ©e du point de dÃ©part du feu
+- `moisture` : la matrice qui contient la valeur de l'humiditÃ© en tout point de l'espace
 
-Les méthodes :
+Les mÃ©thodes :
 - `get_neighbors` renvoie la liste des cellules voisines (diagonales incluses) de (ci, cj)
-- `time_step` actualise l'automate après la simulation d'une étape
-- `run` simule l'automate jusqu'à ce que toutes les cellules soient dans l'état 1 ou 3 et renvoie le nombre de cellule brulée [Pour le moment c'est un `print`pour plus de visibilité]
+- `time_step` actualise l'automate aprÃ¨s la simulation d'une Ã©tape
+- `run` simule l'automate jusqu'Ã  ce que toutes les cellules soient dans l'Ã©tat 1 ou 3 et renvoie le nombre de cellule brulÃ©e [Pour le moment c'est un `print`pour plus de visibilitÃ©]
 
-Le reste c'est essentiellement du bazar qui sert à visualiser l'automate mais qui n'est pas fondamentalement important. Il faut noter que `evolution_animation` ne fonctionne pas (et c'est bien dommage mais c'est la vie).
+Le reste c'est essentiellement du bazar qui sert Ã  visualiser l'automate mais qui n'est pas fondamentalement important. Il faut noter que `evolution_animation` ne fonctionne pas (et c'est bien dommage mais c'est la vie).
 
 
-# IdÃ©es
+# IdÃƒÂ©es
 
 ### Descente de gradient
 
-On choisi un paramètre initial au hasard : paramètre = paramètre de régression de p = B vecteur de dimension n + 1 où n est le nombre de variables explicatives (humidité, température, vent selon x, vent selon y, etc...) (Il s'appelle B parce que markdown n'aime pas beta)
+On choisi un paramÃ¨tre initial au hasard : paramÃ¨tre = paramÃ¨tre de rÃ©gression de p = B vecteur de dimension n + 1 oÃ¹ n est le nombre de variables explicatives (humiditÃ©, tempÃ©rature, vent selon x, vent selon y, etc...) (Il s'appelle B parce que markdown n'aime pas beta)
 
-- On sélectionne un sous ensemble de l'ensemble d'apprentissage
-- Pour chaque instance du sous-ensemble, (zone brulée, carte d'humidité, carte de température, etc...) on construit l'automate associé avec le paramètre actuel B.
-- On calcule le gradient pour cette instance en approximant la dérivée au premier ordre : dR/dx_i(B) = (R(B + h*x_i) - R(B))/h pour un petit h. En calculant ce scalaire pour i allant de 0 à n (inclus), on obtient le gradient en B correspondant à cette instance.
-- On calcule le gradient moyenné sur toutes les instances du sous-ensemble d'apprentissage
-- On fait B = B - r*gradient où r > 0 est le taux d'apprentissage
+- On sÃ©lectionne un sous ensemble de l'ensemble d'apprentissage
+- Pour chaque instance du sous-ensemble, (zone brulÃ©e, carte d'humiditÃ©, carte de tempÃ©rature, etc...) on construit l'automate associÃ© avec le paramÃ¨tre actuel B.
+- On calcule le gradient pour cette instance en approximant la dÃ©rivÃ©e au premier ordre : dR/dx_i(B) = (R(B + h*x_i) - R(B))/h pour un petit h. En calculant ce scalaire pour i allant de 0 Ã  n (inclus), on obtient le gradient en B correspondant Ã  cette instance.
+- On calcule le gradient moyennÃ© sur toutes les instances du sous-ensemble d'apprentissage
+- On fait B = B - r*gradient oÃ¹ r > 0 est le taux d'apprentissage
 - On recommence
 
 
-### Idées d'optimisation
+### IdÃ©es d'optimisation
 
-- Réaliser toutes les exécutions de l'automate nécéssaires au calcul du gradient simultanément pour tirer partie de la vectorialisation avec Numpy (à voir expérimentalement, peut-être que ça ne marchera pas, et peut-être que la mémoire ne va pas aider)
-- Conserver les valeurs des variables explicatives locales dans des vecteurs plutôt que dans des objets fait main pour exploiter la vitesse de Numpy
+- RÃ©aliser toutes les exÃ©cutions de l'automate nÃ©cÃ©ssaires au calcul du gradient simultanÃ©ment pour tirer partie de la vectorialisation avec Numpy (Ã  voir expÃ©rimentalement, peut-Ãªtre que Ã§a ne marchera pas, et peut-Ãªtre que la mÃ©moire ne va pas aider)
+- Conserver les valeurs des variables explicatives locales dans des vecteurs plutÃ´t que dans des objets fait main pour exploiter la vitesse de Numpy
 
 
-### Quelques liens pour classifier les pics (si jamais c'est réelement utile)
+### Quelques liens pour classifier les pics (si jamais c'est rÃ©element utile)
 
 - https://www.baeldung.com/cs/clustering-unknown-number
 - https://stats.stackexchange.com/questions/217875/clustering-very-small-datasets
 - https://medium.com/@sametgirgin/hierarchical-clustering-model-in-5-steps-with-python-6c45087d4318
 
 
-### Notes pour le rapport (pour se souvenir de ce des difficultés rencontrées et tout)
+### Notes pour le rapport (pour se souvenir de ce des difficultÃ©s rencontrÃ©es et tout)
 
 
 
@@ -135,11 +161,11 @@ What we will do then is specify to perlin the seed it should revert to after it 
 
 
 
-- Test de résolution du problème du coût aléatoire avec des automates déterministes
-- Apprentissage : coût divisé par 10, mais les paramètres ne semblent pas converger vers ce à quoi on s'attend (-12, 18 au lieu de 0,-7 avec valeurs initiales -10,20), et ce même avec le coût défini localement
-- Solution potentielle : les données sont en réalité toutes pourries. Plus de 90% des feu ne contiennent qu'une cellule brûlé, ce qui encourage bêtement la machine à prendre des paramètres qui empêchent le feu de commencer.
-- Une solution consiste donc à filtrer les échantillon de donnée, et ne conserver que ceux qui ont plus d'une case brulé.
-- Ce qui s'est passé en réalité : le fait que les automates deviennent déterministes a limité la taille des feu. En effet, les paramètres du génerateurs étaient calibré pour avoir une taille de feu raisonnable, mais la taille des feu a été diminué puisque le déterminisme à essentiellement fait comme si le nombre d'étape pendant lequel une cellule est en feu est de 1. Ainsi nos feu étaient tous microscopiques.
+- Test de rÃ©solution du problÃ¨me du coÃ»t alÃ©atoire avec des automates dÃ©terministes
+- Apprentissage : coÃ»t divisÃ© par 10, mais les paramÃ¨tres ne semblent pas converger vers ce Ã  quoi on s'attend (-12, 18 au lieu de 0,-7 avec valeurs initiales -10,20), et ce mÃªme avec le coÃ»t dÃ©fini localement
+- Solution potentielle : les donnÃ©es sont en rÃ©alitÃ© toutes pourries. Plus de 90% des feu ne contiennent qu'une cellule brÃ»lÃ©, ce qui encourage bÃªtement la machine Ã  prendre des paramÃ¨tres qui empÃªchent le feu de commencer.
+- Une solution consiste donc Ã  filtrer les Ã©chantillon de donnÃ©e, et ne conserver que ceux qui ont plus d'une case brulÃ©.
+- Ce qui s'est passÃ© en rÃ©alitÃ© : le fait que les automates deviennent dÃ©terministes a limitÃ© la taille des feu. En effet, les paramÃ¨tres du gÃ©nerateurs Ã©taient calibrÃ© pour avoir une taille de feu raisonnable, mais la taille des feu a Ã©tÃ© diminuÃ© puisque le dÃ©terminisme Ã  essentiellement fait comme si le nombre d'Ã©tape pendant lequel une cellule est en feu est de 1. Ainsi nos feu Ã©taient tous microscopiques.
 
 
 
