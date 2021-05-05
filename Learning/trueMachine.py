@@ -423,7 +423,7 @@ class machine:
 print("\nFetching database...\n")
 
 # Gets all data entries and compresses their size by a factor of 5
-bigdata = create_dataframe("processing_result", 5)
+bigdata = create_dataframe("../processing_result", 5)
 
 print("\nData fetched successfully")
 
