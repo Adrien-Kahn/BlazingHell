@@ -26,7 +26,7 @@ products corresponding to the selected spot and period.
 `Image_processing` implements the functions that caclculate vegetation density and other important indeces. Its constructor get an instannce of `Fire_spot`
 class. Its main method is :
 
-`calc_indices` :  it calculates all the indeces we need and store theme in the dictionary field `bands_bfr`or `bands_aftr `.
+- `calc_indices` :  it calculates all the indeces we need and store theme in the dictionary field `bands_bfr`or `bands_aftr `.
 
 The static method `run`in the bottom of that file run the whole algorithm on the FIRMS data.
 
