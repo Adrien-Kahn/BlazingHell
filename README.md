@@ -10,7 +10,7 @@ firedata_automation.py implements the functions needed to extract and process fi
 
 ### The class `Fire_spot` 
 
-`Fire_spot` class implements the part that download the image befor and after the fire. Its main fields are :
+`Fire_spot` class implements the part that download the images befor and after the fire. Its main fields are :
 - `lat`: the latitude of the burned spot
 - `lng`: the longitude of the burned spot 
 - `date`: the date of the fire
