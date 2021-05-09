@@ -451,7 +451,7 @@ print("\nFetching database...\n")
 bigdata = create_dataframe("../processing_result", 5)
 
 # Splitting the database between training data and testing data
-train_size = 50
+train_size = 30
 
 train_data = bigdata[:train_size]
 test_data = bigdata[train_size:]
@@ -469,7 +469,7 @@ print("Initial parameters:\n")
 print(daneel)
 print()
 
-print("\nInitial success rate over test data:\t{:.2%}\n".format(daneel.test(test_data, 3)))
+print("\nInitial success rate over test data:\t{:.2%}\n".format(daneel.test(test_data, 5)))
 
 
 t1 = time()
