@@ -451,35 +451,39 @@ print("\nFetching database...\n")
 bigdata = create_dataframe("../processing_result", 5)
 
 # Splitting the database between training data and testing data
-train_size = 30
+train_size = 67
 
 train_data = bigdata[:train_size]
 test_data = bigdata[train_size:]
 
 
-print("\nData fetched successfully")
+print("\nFetched {} entries".format(len(bigdata)))
+print("{} entries for training".format(len(train_data)))
+print("{} entries for testing\n\n".format(len(test_data)))
 
-coef = Coef(-20.5, -0.2, 40, 0.7)
 
-daneel = machine(train_data, 50, coef, h = 0.1, learning_rate = 0.00001, remote = True, cluster = True)
+coef = Coef(-19.5, -0.7, 38.6, -0.25)
 
-print("\n\nMachine built: \n")
+daneel = machine(train_data, 50, coef, h = 0.1, learning_rate = 0.000001, remote = True, cluster = True)
+
+print("Machine built: \n")
 
 print("Initial parameters:\n")
 print(daneel)
 print()
 
-print("\nInitial success rate over test data:\t{:.2%}\n".format(daneel.test(test_data, 5)))
-
+print("\nInitial success rate over test data:\t{:.2%}\n".format(daneel.test(test_data, 10)))
 
 t1 = time()
 
 # for cost computation
-m1 = 20
+m1 = 10
 
 # for gradient computation
 m2 = 30
 
+# for success rate computation
+m3 = 10
 
 # Plots the projection of the cost in the plane of two of the four coordinates
 def fmat():
@@ -551,19 +555,24 @@ def learningTest():
 	
 		tk = time()
 		daneel.learn_step(m2)
-		print("Learning step time:\t{:.2f}s".format(time() - tk))
+		print("Learning step time:\t\t{:.2f}s".format(time() - tk))
 		
 		tk = time()
 		logc = np.log(daneel.fullcost(m1))
-		print("Cost computation time:\t{:.2f}s\n".format(time() - tk))
+		print("Cost computation time:\t\t{:.2f}s".format(time() - tk))
 		
+		tk = time()
+		srate = daneel.test(test_data, m3)
+		print("Success rate computation time:\t{:.2f}s\n".format(time() - tk))
+
 		li.append(daneel.coef.intercept)
 		lm.append(daneel.coef.moisture)
 		lv.append(daneel.coef.vd)
 		lw.append(daneel.coef.wind)
 		lc.append(logc)
 		
-		print("Log cost at step {}:\t{:.2f}\n".format(k, logc))
+		print("Log cost at step {}:\t{:.2f}".format(k, logc))
+		print("Success rate at step {}:\t{:.2%}\n".format(k, srate))
 		print("Parameters at step {}:".format(k))
 		print(daneel)
 	
@@ -583,6 +592,16 @@ def learningTest():
 		
 	print("Learning phase time: {:.2f}s\n\n".format(time() - t1))
 
+
+
+
+"""
+for k in range(20):
+	c = Coef(100*np.random.random() - 50, 100*np.random.random() - 50, 100*np.random.random() - 50, 100*np.random.random() - 50)
+	daneel.coef = c
+	print(daneel)
+	print("Success rate over test data:\t{:.2%}\n\n".format(daneel.test(test_data, 10)))	
+"""
 
 
 #fmat()
