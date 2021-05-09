@@ -25,6 +25,8 @@ np.random.seed(npseed)
 # This seed controls which data indices are chosen in minibatches
 rd.seed(0)
 
+
+# Scales the input matrix data to the shape (out_x, out_y)
 def regrid(data, out_x, out_y):
     m = max(data.shape[0], data.shape[1])
     y = np.linspace(0, 1.0/m, data.shape[0])
@@ -124,6 +126,9 @@ def matdiff(a,b):
 	return len(a[a != b])**2
 
 
+def success_rate(a, b):
+	return a[a == b].size / a.size
+
 # We write a version of gradient that is not a method of machine but a function that takes 
 # all the required arguments
 # This way we can easily make it remote
@@ -188,6 +193,19 @@ def fcost(coef, shape, neighborsMatrix, firestart, moisture, vd, windx, windy, v
 
 
 remote_fcost = ray.remote(fcost)
+
+
+def ftest(coef, shape, neighborsMatrix, firestart, moisture, vd, windx, windy, real_value, m):
+	
+	c = 0
+	
+	for k in range(m):
+		auto = Automaton(coef, shape, neighborsMatrix, firestart, moisture, vd, windx, windy)
+		c += success_rate(auto.final_state(), real_value)
+	
+	return c/m
+
+remote_test = ray.remote(ftest)
 
 
 
@@ -414,7 +432,14 @@ class machine:
 	def predict(self, firestart, moisture, vd, windx, windy):
 		auto = Automaton(self.coef, self.shape, self.neighborsMatrix, firestart, moisture, vd, windx, windy)
 		return auto.final_state()
-
+	
+	
+# 	Computes the success rate of the model on the test_data dataset by averaging the success rate of each entry m times
+	def test(self, test_data, m):
+		n = len(test_data)
+		futures = [remote_test.remote(self.coef, test_data.iloc[k]['shape'], test_data.iloc[k]['neighborsMatrix'], test_data.iloc[k]['firestart'], test_data.iloc[k]['moisture'], test_data.iloc[k]['vd'], test_data.iloc[k]['windx'], test_data.iloc[k]['windy'], test_data.iloc[k]['value'], m) for k in range(n)]
+		srate_list = ray.get(futures)
+		return np.average(srate_list)
 
 
 
@@ -425,17 +450,27 @@ print("\nFetching database...\n")
 # Gets all data entries and compresses their size by a factor of 5
 bigdata = create_dataframe("../processing_result", 5)
 
+# Splitting the database between training data and testing data
+train_size = 50
+
+train_data = bigdata[:train_size]
+test_data = bigdata[train_size:]
+
+
 print("\nData fetched successfully")
 
 coef = Coef(-20.5, -0.2, 40, 0.7)
 
-daneel = machine(bigdata, 50, coef, h = 0.1, learning_rate = 0.00001, remote = True, cluster = True)
+daneel = machine(train_data, 50, coef, h = 0.1, learning_rate = 0.00001, remote = True, cluster = True)
 
 print("\n\nMachine built: \n")
 
 print("Initial parameters:\n")
 print(daneel)
 print()
+
+print("\nInitial success rate over test data:\t{:.2%}\n".format(daneel.test(test_data, 3)))
+
 
 t1 = time()
 
