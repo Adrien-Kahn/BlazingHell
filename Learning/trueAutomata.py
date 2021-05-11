@@ -306,8 +306,10 @@ if __name__ == "__main__":
 	windy = -2
 	
 	auto = Automaton(coef, nshape, nM, fs, moisture, vd, windx, windy)
+	auto.run()
 	
-	
+
+	"""
 	fig, ax = plt.subplots()
 	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
 	
@@ -316,4 +318,4 @@ if __name__ == "__main__":
 		auto.time_step()
 	
 	ani = FuncAnimation(fig, update, interval = 100)
-	
+	"""
