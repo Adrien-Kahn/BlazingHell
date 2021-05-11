@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pylab as plt
 from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 from time import time
@@ -8,7 +9,6 @@ from time import time
 
 def sigmoid(x):
 	return 1/(1 + np.exp(-x))
-
 
 # The wind makes everything more complicated
 
@@ -286,7 +286,7 @@ class Automaton:
 
 if __name__ == "__main__":
 		
-	n = 50
+	n = 100
 	nshape = (n,n)
 	fs = (int(n/2), int(n/2))
 	
@@ -310,10 +310,18 @@ if __name__ == "__main__":
 	
 	fig, ax = plt.subplots()
 	im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+	
 	def update(x):
 		im.set_array(auto.state_matrix())
 		auto.time_step()
+	
 	ani = FuncAnimation(fig, update, interval = 100)
+	
+	"""
+	f = r"c://Users/adrie/Desktop/animation.gif" 
+	writergif = animation.PillowWriter(fps=30) 
+	ani.save(f, writer=writergif)
+	"""
 
 
 """
