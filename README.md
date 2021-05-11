@@ -26,7 +26,7 @@ products corresponding to the selected spot and period.
 `Image_processing` implements the functions that calculates vegetation density and other important indeces. Its constructor gets an instance of `Fire_spot`
 class. Its main method is:
 
-- `calc_indices`: it calculates all the indeces we need and store theme in the dictionary field `bands_bfr` or `bands_aftr`.
+- `calc_indices`: it calculates all the indices we need and store theme in the dictionary field `bands_bfr` or `bands_aftr`.
 
 The static method `run` in the bottom of that file runs the whole algorithm on the FIRMS data.
 
@@ -104,7 +104,13 @@ If `remote` is True but not `cluster`, the program will be distributed locally. 
 Its most important methods are:
 
 - `fullcost`: Returns the average of the cost of each data point, each cost being itself averaged over `m` simulations. Depending on the state of `remote`, fullcost either calls a method that does the computation normally or one that does it remotely.
-- `learn_step`: 
+- `learn_step`: Performs one step of the gradient descent, by first computing the gradient over a selected mini-batche (the gradient on each instance in the mini-batch being averaged over `m` simulations), and then using the gradient to take a step in the parameter space in (hopefully) the right direction.
+
+Both these method call on different submethods depending on whether the calculations are done remotely or not. In the former case, it eventually calls functions instead of method because it is easier to work with functions when doing remote computations.
+
+The `matdiff` function returns the square of the number of cells in which the state (burnt or not burnt) is different. It is used as the error function to quantify how far the prediction strays from the target value.
+
+The "main function" builds a database with the `data` function from `data_generator.py` and a `machine` object. It then performs learning steps and displays information about the evolution of the parameters and the cost.
 
 
 # newenv
