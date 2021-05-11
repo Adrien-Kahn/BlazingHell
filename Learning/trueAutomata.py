@@ -431,8 +431,8 @@ if __name__ == "__main__":
                 	im.set_array(auto.state_matrix())
                 	auto.time_step()
 
-		ani = FuncAnimation(fig, update, interval = 100)
+		ani = FuncAnimation(fig, update, interval = 100, frames = 200)
 
-		writergif = animation.PillowWriter(fps=30)
+		writergif = animation.PillowWriter(fps=10)
 		ani.save("ani" + str(k) + ".gif", writer=writergif)
 
