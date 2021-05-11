@@ -11,11 +11,6 @@ from scipy.interpolate import RegularGridInterpolator
 
 import ray
 
-# We now will have to ponder the question of firestart
-
-# To start, we take for firestart the point with the highest value in the burned area array
-
-
 
 
 # This seed controls pretty much everything else

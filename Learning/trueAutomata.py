@@ -1,122 +1,25 @@
 import numpy as np
 import matplotlib.pylab as plt
 from matplotlib.animation import FuncAnimation
-import matplotlib.animation as animation
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 from time import time
-import pandas as pd
-import os
-from scipy.interpolate import RegularGridInterpolator
-
-# Scales the input matrix data to the shape (out_x, out_y)
-def regrid(data, out_x, out_y):
-    m = max(data.shape[0], data.shape[1])
-    y = np.linspace(0, 1.0/m, data.shape[0])
-    x = np.linspace(0, 1.0/m, data.shape[1])
-    interpolating_function = RegularGridInterpolator((y, x), data)
-
-    yv, xv = np.meshgrid(np.linspace(0, 1.0/m, out_y), np.linspace(0, 1.0/m, out_x))
-
-    return interpolating_function((xv, yv))
-
-
-
-# Builds a dataframe by fetching data from the folder indicated in path
-# path: relative path to the folder containing all fire instances
-# compression_factor: the factor by which to compress the dimensions of the arrays
-# n: optional parameter to limit the number of entries fetched
-def create_dataframe(path, compression_factor, n = -1):
-	
-	cf = compression_factor
-	k = 0
-	df = pd.DataFrame(columns = ['entry number', 'value', 'moisture', 'vd', 'windx', 'windy', 'firestart', 'shape', 'neighborsMatrix'])
-	
-	for filename in os.scandir(path):
-				
-		if filename.name[0:9] == 'Australia':
-	
-			print("Loading " + filename.name)
-			
-			number = [int(i) for i in filename.name.split("_") if i.isdigit()][0]
-			
-			for entry in os.scandir(filename.path):
-				
-				prefix = path + '/' + filename.name + '/'
-				
-				if entry.name == 'vegetation_density.csv':
-					vegetation_density = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-					x,y = vegetation_density.shape
-					vd = regrid(vegetation_density, x//cf, y//cf)
-					
-				elif entry.name == 'burned_area.csv':
-					burned_area = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-					x,y = burned_area.shape
-					ba = regrid(burned_area, x//cf, y//cf)
-					value = np.zeros(ba.shape)
-					value[ba > 0.5] = 3
-					value[ba <= 0.5] = 1
-					
-				elif entry.name == 'humidity.csv':
-					humidity = np.loadtxt(prefix + entry.name, delimiter=",", skiprows=1)
-					x,y = humidity.shape
-					moisture = regrid(humidity, x//cf, y//cf)
-			
-			# Get the argmax of burned area for firestart
-			firestart = np.unravel_index(ba.argmax(), value.shape)
-			
-			# Store the shape and neighborsMatrix
-			shape = value.shape
-			nM = neighbors_matrix(shape)
-			
-			df.loc[k] = [number, value, moisture, vd, 0, 0, firestart, shape, nM]
-			k += 1
-			
-			if k == n:
-				break
-	
-# 	Fetching the winds
-
-	print("\nLoading winds")
-
-	windfile = open(path + "/processed_wind.txt")
-	winddata = windfile.read()
-	entries = winddata.split("\n")
-	
-	entries = [s.split() for s in entries]
-	
-	for i in range(len(df.index)):
-		
-		for line in entries:
-						
-			if int(line[0]) == df.iloc[i]['entry number']:
-				
-				df.at[i, 'windx'] = float(line[1])
-				df.at[i, 'windy'] = float(line[2])
-				
-				break
-		
-		if df.at[i, 'windx'] == 0:
-			print("Failed to fetch wind for entry {}".format(df.iloc[i]['entry number']))
-
-	return df
 
 
 def sigmoid(x):
 	return 1/(1 + np.exp(-x))
 
-# The wind makes everything more complicated
 
-# Cell.state vaut :
-#1 pour une cellule enflammable
-#2 pour une cellule enflammée
-#3 pour une cellule consummée
+# Cell.state is:
+#1 for a burnable cell
+#2 for a burning cell
+#3 for a burnt cell
 
 cmap = ListedColormap(['g', 'r', 'k'])
 boundaries = [0, 1.5, 2.5, 4]
 norm = BoundaryNorm(boundaries, cmap.N, clip=True)
 
-# Une cellule enflammée reste dans cet état pendant c_fuel étapes
+# A burning cells keeps burning for c_fuel steps
 
 c_fuel = 5
 
@@ -414,25 +317,3 @@ if __name__ == "__main__":
 	
 	ani = FuncAnimation(fig, update, interval = 100)
 	
-	
-	#f = r"c://Users/adrie/Desktop/animation.gif" 
-	writergif = animation.PillowWriter(fps=30) 
-	ani.save("ani.gif", writer=writergif)
-
-
-	bigdata = create_dataframe("../processing_result", 5, n = 5)
-	coef = Coef(-19.5, -0.7, 38.6, -0.25)
-
-	for k in range(5):
-		auto = Automaton(coef, bigdata.iloc[k]['shape'], bigdata.iloc[k]['neighborsMatrix'], bigdata.iloc[k]['firestart'], bigdata.iloc[k]['moisture'], bigdata.iloc[k]['vd'], bigdata.iloc[k]['windx'], bigdata.iloc[k]['windy'])
-		fig, ax = plt.subplots()
-		im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
-		def update(x):
-                	im.set_array(auto.state_matrix())
-                	auto.time_step()
-
-		ani = FuncAnimation(fig, update, interval = 100, frames = 200)
-
-		writergif = animation.PillowWriter(fps=10)
-		ani.save("ani" + str(k) + ".gif", writer=writergif)
-
