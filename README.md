@@ -151,3 +151,10 @@ And some less interesting ones for the purpose of representativity:
 ![ani0](https://user-images.githubusercontent.com/73946504/117882355-89bd4880-b2aa-11eb-9ca0-8466bf475f87.gif)
 
 ![ani1](https://user-images.githubusercontent.com/73946504/117882356-8a55df00-b2aa-11eb-93b8-605431d15bc2.gif)
+
+### An example of different end results for simulations with identical parameters and data
+
+![Ani](https://user-images.githubusercontent.com/73946504/119347397-c4a48080-bc9b-11eb-8a26-24c52bd9ee76.gif)
+
+![Ani2](https://user-images.githubusercontent.com/73946504/119347409-c9693480-bc9b-11eb-9b6d-fc6368eb98bc.gif)
+
