@@ -289,6 +289,41 @@ print("Initial parameters:\n")
 print(daneel)
 
 
+# Plots the projection of the cost in the plane of two of the four coordinates
+def fmat():
+
+	xn = 10
+	yn = 10
+	
+	x = np.linspace(0, 10, xn)
+	y = np.linspace(-10, 0, yn)
+	
+	lx = []
+	ly = []
+	lc = []
+
+	for i in range(xn):
+		for j in range(yn):
+			print(i,j)
+			daneel.c_intercept = x[i]
+			daneel.c_moisture = y[j]
+			lx.append(x[i])
+			ly.append(y[j])
+			lc.append(np.log(daneel.fullcost(m1)))
+	
+	plt.scatter(lx, ly, s = 1000, c = lc, cmap = 'viridis')
+	plt.colorbar()
+	plt.xlabel("c_intercept")
+	plt.ylabel("c_moisture")
+	plt.legend()
+	plt.show()
+	print(lx)
+	print(ly)
+	print(lc)
+	
+fmat()
+
+
 
 """
 # With m = 10 we get a full cost with precision around 1%
