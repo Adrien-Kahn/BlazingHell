@@ -4,6 +4,7 @@ import pandas as pd
 from automata import Automaton
 
 from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 
@@ -88,6 +89,7 @@ def data(n, c_intercept, c_moisture, shape, firestart, revert_seed):
 		k += 1
 	return df
 
+"""
 if __name__ == "__main__":
 	x,y = 50,50
 	lx = np.linspace(0,5,x,endpoint=False)
@@ -107,10 +109,14 @@ if __name__ == "__main__":
 	print(df.at[0,'value'])
 	print(auto0.run())
 
-# fig, ax = plt.subplots()
-# im = ax.imshow(auto0.state_matrix(), cmap = cmap, norm = norm)
-# def update(x):
-# 	im.set_array(auto0.state_matrix())
-# 	auto0.time_step()
-# ani = FuncAnimation(fig, update, interval = 100)
+auto = Automaton(c_intercept = 0.5, c_moisture = -7, shape = (x,y), firestart = (int(x/2),int(y/2)), moisture = dat.at[0, 'moisture'])
+fig, ax = plt.subplots()
+im = ax.imshow(auto.state_matrix(), cmap = cmap, norm = norm)
+def update(x):
+	im.set_array(auto0.state_matrix())
+	auto0.time_step()
+ani = FuncAnimation(fig, update, interval = 100)
+writergif = animation.PillowWriter(fps=30) 
+ani.save("ani.gif", writer=writergif)
 	
+"""
