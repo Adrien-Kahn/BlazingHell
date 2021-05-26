@@ -172,6 +172,7 @@ class Automaton:
 					if 1 in l:
 						p = sigmoid(s + self.coef.wind * c.windy)
 						if np.random.random() < p:
+						#if 0.5 < p:
 							
 # 							Changing the state to burning
 							c.state = 2
@@ -191,6 +192,7 @@ class Automaton:
 					if 2 in l:
 						p = sigmoid(s - self.coef.wind * c.windy)
 						if np.random.random() < p:
+						#if 0.5 < p:
 							c.state = 2
 							self.fire_nb += 1
 							new_cache[index] = "fire"
@@ -206,6 +208,7 @@ class Automaton:
 					if 3 in l:
 						p = sigmoid(s - self.coef.wind * c.windx)
 						if np.random.random() < p:
+						#if 0.5 < p:
 							c.state = 2
 							self.fire_nb += 1
 							new_cache[index] = "fire"
@@ -221,6 +224,7 @@ class Automaton:
 					if 4 in l:
 						p = sigmoid(s + self.coef.wind * c.windx)
 						if np.random.random() < p:
+						#if 0.5 < p:
 							c.state = 2
 							self.fire_nb += 1
 							new_cache[index] = "fire"
